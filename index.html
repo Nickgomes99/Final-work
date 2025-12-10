@@ -1535,49 +1535,49 @@
             // Bottom Left
             ctx.beginPath(); ctx.moveTo(x + len, y + height); ctx.lineTo(x, y + height); ctx.lineTo(x, y + height - len); ctx.stroke();
 
-            // Floating Text Panel (Perfectly Centered IN FRONT of face)
-            const panelWidth = 200;
-            const panelHeight = 180; // Increased height for extra info
+            // Floating Text Panel (Centered between the eyes)
+            const panelWidth = 280;
+            const panelHeight = 220; // Much larger text box
             
-            // Calculate perfect center position aligned with face center
+            // Calculate position: target between the eyes (upper third of face)
             const faceCenterX = x + (width / 2);
-            const faceCenterY = y + (height / 2);
+            const eyeLineY = y + (height * 0.35); // Eyes are roughly at 35% from top of face
             let textX = faceCenterX - (panelWidth / 2);
-            let textY = faceCenterY - (panelHeight / 2);
+            let textY = eyeLineY - (panelHeight / 2);
 
             // Background for text
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)'; // Darker bg for readability
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.9)'; // Very dark bg for maximum readability
             ctx.fillRect(textX, textY, panelWidth, panelHeight);
             ctx.strokeStyle = '#10b981';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             ctx.strokeRect(textX, textY, panelWidth, panelHeight);
 
-            // Text info
-            ctx.font = "bold 14px Orbitron";
+            // Text info with larger fonts
+            ctx.font = "bold 16px Orbitron";
             ctx.fillStyle = "#10b981";
-            ctx.fillText("CITIZEN: DETECTED", textX + 15, textY + 25);
+            ctx.fillText("CITIZEN: DETECTED", textX + 20, textY + 30);
             
             // Get ID from DOM
             const currentID = document.getElementById('citizenId').textContent || "UNKNOWN";
 
             ctx.fillStyle = "#e2e8f0";
-            ctx.font = "12px Inter"; 
+            ctx.font = "14px Inter"; 
             
-            // New Lines
-            ctx.fillText("ID: " + currentID, textX + 15, textY + 50);
-            ctx.fillText("Zone: 4 (Resident)", textX + 15, textY + 70);
+            // New Lines with more spacing
+            ctx.fillText("ID: " + currentID, textX + 20, textY + 60);
+            ctx.fillText("Zone: 4 (Resident)", textX + 20, textY + 85);
 
             // Existing Lines shifted down
-            ctx.fillText("Serenity: " + citizenData.serenityScore + "%", textX + 15, textY + 90);
-            ctx.fillText("Debt: " + citizenData.complianceDebt + "%", textX + 15, textY + 110);
+            ctx.fillText("Serenity: " + citizenData.serenityScore + "%", textX + 20, textY + 110);
+            ctx.fillText("Debt: " + citizenData.complianceDebt + "%", textX + 20, textY + 135);
             
             ctx.fillStyle = citizenData.complianceDebt > 80 ? "#ef4444" : "#10b981";
-            ctx.fillText("STATUS: " + (citizenData.complianceDebt > 80 ? "RISK" : "COMPLIANT"), textX + 15, textY + 130);
+            ctx.fillText("STATUS: " + (citizenData.complianceDebt > 80 ? "RISK" : "COMPLIANT"), textX + 20, textY + 160);
 
             // New Mandate/Enforcement Lines
             ctx.fillStyle = "#fca5a5"; // Light red/pink for alert info
-            ctx.fillText("Flagged: 'Freedom'", textX + 15, textY + 155);
-            ctx.fillText("Reassignment: PENDING", textX + 15, textY + 175);
+            ctx.fillText("Flagged: 'Freedom'", textX + 20, textY + 190);
+            ctx.fillText("Reassignment: PENDING", textX + 20, textY + 215);
         };
 
         const updateARSimData = () => {
