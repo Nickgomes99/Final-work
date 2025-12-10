@@ -840,16 +840,31 @@
             // Show the output immediately
             mandateOutput.classList.remove('hidden');
             
-            // Check if API key is configured
-            if (!apiKey || apiKey.includes('[YOUR_FULL_KEY_HERE]')) {
-                mandateText.textContent = "⚠️ API Key Required: Please configure your Google Gemini API key to use this feature. Get one at https://makersuite.google.com/app/apikey";
-                return;
-            }
-            
             const keywords = document.querySelector('#readingB p:nth-child(2)')?.textContent || "Unknown";
             const currentDebt = citizenData.complianceDebt;
             const citizenID = document.getElementById('citizenId').textContent;
             
+            // Check if API key is configured properly
+            if (!apiKey || apiKey.includes('[YOUR_FULL_KEY_HERE]')) {
+                // Fallback: Generate mandate without API
+                let mandateMessage = "";
+                
+                if (currentDebt >= 80) {
+                    mandateMessage = `🚨 IMMEDIATE EXTRACTION ORDER 🚨\n\nCitizen ID: ${citizenID}\nCompliance Debt: ${currentDebt}%\n\nYou are hereby ORDERED to report to Zone 10 Processing Center immediately. Your persistent non-compliance and flagged keywords (${keywords}) have triggered mandatory relocation protocols.\n\nFailure to comply will result in forced extraction by Grid Enforcement.\n\n- Chief Enforcer, Empathic Grid Authority`;
+                } else if (currentDebt >= 50) {
+                    mandateMessage = `⚠️ FORMAL ISOLATION MANDATE ⚠️\n\nCitizen ID: ${citizenID}\nCompliance Debt: ${currentDebt}%\n\nDue to elevated non-compliant emotional amplitude, you are mandated for temporary re-calibration at Zone 10 Facility.\n\nKeywords flagged: ${keywords}\n\nReport within 72 hours for collective stability protocols.\n\n- Director of Compliance`;
+                } else if (currentDebt >= 20) {
+                    mandateMessage = `📋 Notice of Harmony Correction\n\nCitizen ID: ${citizenID}\nCompliance Debt: ${currentDebt}%\n\nWe've noticed minor fluctuations in your emotional stability. For your own well-being and the collective good, we strongly suggest voluntary adjustment at Zone 6.\n\nKeywords noted: ${keywords}\n\nRemember, harmony is happiness.\n\n- Grid Counselor`;
+                } else {
+                    mandateMessage = `✨ COMMENDATION OF UNITY ✨\n\nCitizen ID: ${citizenID}\nCompliance Debt: ${currentDebt}%\n\nExcellent work maintaining emotional flatness! You are a model citizen. Your stability inspires the collective.\n\nReward granted: +10 minutes sky-viewing privileges\n\n- Voice of the Empathic Grid`;
+                }
+                
+                mandateText.textContent = mandateMessage;
+                mandateText.style.whiteSpace = 'pre-line';
+                return;
+            }
+            
+            // If API key exists, use AI generation
             let systemPrompt = "";
             let contextInstruction = "";
 
