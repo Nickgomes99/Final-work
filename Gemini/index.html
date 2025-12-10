@@ -1,0 +1,1706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CityOS Portal: The Empathic Grid</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Tracking.js for Face Detection -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/tracking-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/data/face-min.js"></script>
+    
+    <style>
+        /* Custom font for a futuristic look */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Inter:wght@300;400;600&display=swap');
+        
+        :root {
+            --grid-color-utopia: #10b981; /* Emerald */
+            --color-dystopia: #ef4444; /* Red */
+            --bg-dark: #0f172a; /* Slate 900 */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #e2e8f0; /* Slate 200 */
+        }
+
+        .font-futuristic {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Styling for the map/canvas container */
+        #mapCanvas, #directionalCanvas, #arCanvas {
+            border-radius: 0.75rem; /* rounded-xl */
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        /* Animation for the intervention messages */
+        @keyframes pulse-intervene {
+            0%, 100% { background-color: rgba(239, 68, 68, 0.4); border-color: #ef4444; }
+            50% { background-color: rgba(239, 68, 68, 0.8); border-color: #fca5a5; }
+        }
+
+        .intervene-alert {
+            animation: pulse-intervene 1.5s infinite;
+        }
+
+        /* AR Specific Styles */
+        .ar-container {
+            position: relative;
+            overflow: hidden;
+            background: #000;
+        }
+        
+        #arVideo {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.8; /* Increased opacity for visibility */
+            z-index: 1;
+        }
+
+        #arCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+
+        .hud-overlay {
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.1) 0%, rgba(0,0,0,0) 100%);
+            pointer-events: none;
+        }
+
+        /* Custom toggle switch appearance */
+        .toggle-track {
+            background-color: #0f172a; /* Same as background */
+            border: 2px solid #334155;
+            transition: all 0.3s ease;
+        }
+
+        #viewToggle:checked + .toggle-track {
+            border-color: #64748b; /* Slate 500 */
+        }
+        
+        /* Building Modal Styles */
+        .building-modal {
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8 flex items-center justify-center text-white relative">
+
+    <div class="w-full max-w-7xl bg-slate-900 shadow-2xl rounded-2xl p-6 lg:p-10 border border-slate-700/50 relative z-10">
+        
+        <!-- Header and Toggle Switch -->
+        <header class="mb-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            <h1 class="text-4xl sm:text-5xl font-extrabold font-futuristic text-emerald-400">
+                CityOS Portal <span id="viewTitle" class="text-xl sm:text-2xl text-slate-300 ml-3">/ Empathic Grid</span>
+            </h1>
+            
+            <div class="flex items-center space-x-6">
+                <!-- AR Button -->
+                <button id="arToggleButton" class="px-4 py-2 bg-slate-800 border border-emerald-500/50 hover:bg-emerald-900/30 text-emerald-400 rounded-lg font-futuristic text-sm transition-all flex items-center gap-2">
+                    <span>👁️</span> AR LENS
+                </button>
+
+                <!-- Divider -->
+                <div class="h-8 w-px bg-slate-700 hidden md:block"></div>
+
+                <!-- Toggle Switch -->
+                <div class="flex items-center space-x-3" id="standardControls">
+                    <span class="text-sm font-futuristic text-emerald-400">EMPATHIC GRID</span>
+                    <label for="viewToggle" class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="viewToggle" class="sr-only peer">
+                        <div class="w-14 h-8 toggle-track rounded-full peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-emerald-400 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:bg-red-500"></div>
+                    </label>
+                    <span class="text-sm font-futuristic text-red-500">TIME SHARE</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Primary Display (Map/Housing/AR) - Col Span 2 -->
+            <div class="lg:col-span-2 bg-slate-800 rounded-xl p-4 sm:p-6 min-h-[450px] flex flex-col shadow-inner border border-slate-700 overflow-hidden relative">
+                
+                <!-- View A: Empathic Grid (Heatmap Canvas) -->
+                <div id="viewA" class="w-full h-full relative transition-opacity duration-300 flex-grow flex flex-col">
+                    
+                    <!-- Map Container -->
+                    <div class="flex-grow relative w-full h-60 min-h-[250px]" style="background-image: url('2d map.jpg'); background-size: cover; background-position: center;">
+                        <canvas id="mapCanvas" class="w-full h-full rounded-xl" style="background: transparent;"></canvas>
+                        
+                        <!-- Real-time Indicator -->
+                        <div class="absolute top-4 left-4 flex items-center space-x-2 bg-slate-900/70 backdrop-blur-sm px-3 py-1.5 rounded-full border border-emerald-500/50">
+                            <div class="w-3 h-3 bg-emerald-400 rounded-full animate-ping"></div>
+                            <span class="text-xs font-futuristic text-emerald-400 tracking-wider">LIVE SERENITY FEED</span>
+                        </div>
+
+                        <!-- Intervention Alert (Hidden by default) -->
+                        <div id="interventionAlert" class="intervene-alert absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/4 max-w-sm p-4 rounded-xl text-center shadow-lg border-2 border-red-500/0 hidden">
+                            <p class="font-futuristic text-lg text-red-100">🚫 NOISE SPIKE DETECTED 🚫</p>
+                            <p class="text-sm text-red-300 mt-1">Mandatory Harmonic Correction Protocol initiated. Please re-engage with tranquility media.</p>
+                        </div>
+                    </div>
+
+                    <!-- Controls Section (View A) -->
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Voluntary Serenity Input (Empathic Grid Version) -->
+                        <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700">
+                             <p class="text-lg font-futuristic text-emerald-400 mb-2">Voluntary Compliance</p>
+                             <button id="tranquilityButtonA" class="w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-500 font-futuristic rounded-xl transition-colors shadow-emerald-900 shadow-md flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.007 12.007 0 002.944 12c0 2.899 1.127 5.568 3.04 7.618a12.007 12.007 0 0015.032-7.618 11.955 11.955 0 01-3.04-8.618z"></path></svg>
+                                <span>Re-Engage with Protocol</span>
+                            </button>
+                            <p class="text-xs text-slate-400 mt-2">Boosts Serenity Score (+10) and lowers Debt (-5).</p>
+                        </div>
+
+                        <!-- Noise Simulation (Empathic Grid Version) -->
+                        <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700">
+                            <p class="text-lg font-futuristic text-red-400 mb-2">System Test</p>
+                            <button id="noiseButtonA" class="w-full px-4 py-3 bg-red-600 hover:bg-red-700 font-futuristic rounded-xl transition-colors shadow-red-900 shadow-md flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+                                <span>SIMULATE NOISE SPIKE</span>
+                            </button>
+                            <p class="text-xs text-red-300 mt-2">Triggers dissent protocol and increases Debt (+10).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View B: Time Share (Directional Map) -->
+                <div id="viewB" class="w-full h-full hidden flex flex-col relative transition-opacity duration-300 flex-grow">
+                    
+                    <h2 class="text-2xl font-futuristic text-red-400 mb-2 text-center">MANDATORY RELOCATION PATH</h2>
+                    <p class="text-sm text-slate-400 mb-4 text-center">Path calculated based on current Compliance Debt level.</p>
+
+                    <!-- Map Container -->
+                    <div class="flex-grow relative w-full h-60 min-h-[250px]" style="background-image: url('2d map.webp'); background-size: cover; background-position: center;">
+                         <!-- Directional Map Canvas -->
+                         <canvas id="directionalCanvas" class="w-full h-full rounded-xl cursor-crosshair" style="background: transparent;"></canvas>
+                    </div>
+
+                    <!-- Key Info Overlay (Moved outside and below the map) -->
+                    <div class="mt-4 bg-slate-900/90 p-4 rounded-xl border border-red-600/50 relative">
+                        <div class="flex justify-between items-center text-sm font-futuristic">
+                            <span class="text-red-300">Current: Zone 4</span>
+                            <span class="text-red-300">Exile: Zone 10</span>
+                        </div>
+                        <div class="mt-3">
+                            <p class="text-xs text-red-400 mb-1">COMPLIANCE DEBT LEVEL (Trigger)</p>
+                            <div class="w-full bg-slate-700 rounded-full h-3 relative overflow-hidden">
+                                <div id="debtBar" class="bg-red-500 h-3 rounded-full transition-all duration-1000 relative" style="width: 75%"></div>
+                            </div>
+                            <p id="debtPercent" class="text-xs text-red-400 mt-1 font-futuristic text-right">75%</p>
+                        </div>
+                    </div>
+
+                    <!-- Controls Section (Moved from Sidebar) -->
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Voluntary Serenity Input (Time Share Version) -->
+                        <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700">
+                             <p class="text-lg font-futuristic text-red-400 mb-2">Voluntary Compliance</p>
+                             <button id="tranquilityButtonB" class="w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-500 font-futuristic rounded-xl transition-colors shadow-emerald-900 shadow-md flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.007 12.007 0 002.944 12c0 2.899 1.127 5.568 3.04 7.618a12.007 12.007 0 0015.032-7.618 11.955 11.955 0 01-3.04-8.618z"></path></svg>
+                                <span>Re-Engage with Protocol</span>
+                            </button>
+                            <p class="text-xs text-red-300 mt-2">Boosts Serenity Score (+10) and lowers Debt (-5).</p>
+                        </div>
+
+                        <!-- Simulate Noise Spike (Time Share Version) -->
+                        <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700">
+                            <p class="text-lg font-futuristic text-red-400 mb-2">System Test</p>
+                            <button id="noiseButtonB" class="w-full px-4 py-3 bg-red-600 hover:bg-red-700 font-futuristic rounded-xl transition-colors shadow-red-900 shadow-md flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+                                <span>SIMULATE NOISE SPIKE</span>
+                            </button>
+                            <p class="text-xs text-red-300 mt-2">Triggers dissent protocol and increases Debt (+10).</p>
+                        </div>
+                    </div>
+
+                    <!-- LLM FEATURE 2: Isolation Mandate Generation (Kept Here) -->
+                    <div class="mt-4 bg-slate-900/50 p-4 rounded-xl border border-slate-700">
+                        <p class="text-lg font-futuristic text-red-400 mb-2">Mandate Command Terminal</p>
+                        <button id="draftMandateButton" class="w-full px-4 py-3 bg-red-600 hover:bg-red-500 font-futuristic rounded-xl transition-colors shadow-red-900 shadow-md flex items-center justify-center space-x-2">
+                            📝 <span>Draft Isolation Mandate</span>
+                        </button>
+                        <div id="mandateOutput" class="mt-2 text-sm text-red-300 bg-slate-700 p-2 rounded hidden">
+                            <p id="mandateText"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View C: AR Prototype (Hidden by default) -->
+                <div id="viewC" class="w-full h-full hidden absolute inset-0 bg-black ar-container">
+                    <!-- Video Feed -->
+                    <video id="arVideo" muted playsinline autoplay></video>
+                    <!-- HUD Canvas Overlay -->
+                    <canvas id="arCanvas" class="absolute inset-0 w-full h-full"></canvas>
+                    
+                    <!-- HUD Static Overlay Elements -->
+                    <div class="absolute top-4 right-4 text-right z-20">
+                         <p class="text-emerald-400 font-futuristic text-xs animate-pulse">LENS ACTIVE // SCANNING</p>
+                         <p class="text-slate-500 text-[10px]">BIO-METRIC ID: ENABLED</p>
+                    </div>
+                    
+                    <!-- Camera Error Message -->
+                    <div id="cameraError" class="hidden absolute inset-0 flex items-center justify-center bg-slate-900/90 z-20">
+                        <div class="text-center p-6">
+                            <p class="text-red-500 font-futuristic text-xl mb-2">SIGNAL LOST</p>
+                            <p class="text-slate-400 text-sm">Camera access denied or unavailable.</p>
+                            <p class="text-slate-500 text-xs mt-4">Running simulation mode...</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Sidebar Panel - Col Span 1 -->
+            <div class="lg:col-span-1 flex flex-col space-y-6">
+
+                <!-- Citizen Status Widget (Always visible) -->
+                <div class="bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-lg">
+                    <h3 class="text-xl font-futuristic text-slate-300 mb-3">CITIZEN STATUS</h3>
+                    <p class="text-sm text-slate-400">Citizen ID: <span class="font-bold text-slate-200" id="citizenId">1995-A7342</span></p>
+                    
+                    <div class="mt-4">
+                        <p class="text-sm text-slate-400 mb-1">Current Serenity Score (A-View)</p>
+                        <div class="w-full bg-slate-700 rounded-full h-3">
+                            <div id="serenityBar" class="bg-emerald-500 h-3 rounded-full transition-all duration-500" style="width: 92%"></div>
+                        </div>
+                        <p id="serenityPercent" class="text-xs text-emerald-400 mt-1 font-futuristic">92% (Optimal)</p>
+                    </div>
+
+                    <div class="mt-4">
+                        <p class="text-sm text-slate-400 mb-1">Recorded Noise Incidents (B-View)</p>
+                        <p class="text-2xl font-futuristic text-red-500" id="incidentCount">4</p>
+                    </div>
+                </div>
+
+                <!-- View-Specific Readings -->
+                <div id="readingPanel" class="bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-lg h-full">
+                    <h3 class="text-xl font-futuristic text-slate-300 mb-3" id="readingHeader">EMPATHIC GRID ANALYTICS</h3>
+                    
+                    <!-- Content for View A -->
+                    <div id="readingA">
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-sm text-slate-400">Ambient Emotional Average</p>
+                                <p class="text-2xl font-futuristic text-emerald-400">7.8 / 10</p>
+                                <p class="text-xs text-slate-500">Global stability maintained.</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-slate-400">Largest Noise Cluster</p>
+                                <p class="text-2xl font-futuristic text-yellow-400">Sector 6 (Low Dissent)</p>
+                                <p class="text-xs text-slate-500">Automated drone deployment pending.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- LLM FEATURE 1: Optimal Thought Generation -->
+                        <div class="mt-6 pt-4 border-t border-slate-700">
+                            <p class="text-lg font-futuristic text-emerald-400 mb-2">Grid-Mind Guidance</p>
+                            <button id="generateThoughtButton" class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-500 font-futuristic rounded-xl transition-colors shadow-blue-900 shadow-md flex items-center justify-center space-x-2">
+                                ✨ <span>Generate Optimal Thought</span>
+                            </button>
+                            <div id="thoughtOutput" class="mt-2 text-sm text-slate-300 bg-slate-700 p-2 rounded hidden">
+                                <p id="thoughtText"></p>
+                            </div>
+                        </div>
+
+                        <!-- Tranquility Media Re-Engagement Section (dynamic content) -->
+                        <div id="tranquilityMedia" class="mt-6 pt-4 border-t border-slate-700">
+                            <p class="text-lg font-futuristic text-emerald-400 mb-2">Mandated Protocols</p>
+                            <ul id="mediaList" class="space-y-2 text-sm">
+                                <!-- Content will be dynamically populated by JavaScript -->
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Content for View B (Sidebar) -->
+                    <div id="readingB" class="hidden">
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-sm text-slate-400">Non-Compliant Keywords Logged</p>
+                                <!-- Added ID 'keywordLog' for dynamic updates -->
+                                <p id="keywordLog" class="text-2xl font-futuristic text-red-400">"Unfair" (x1), "Hate" (x2), "Freedom" (x5)</p>
+                                <!-- Added ID 'keywordDesc' for dynamic updates -->
+                                <p id="keywordDesc" class="text-xs text-slate-500">Flagged by Grid-Mind for emotional intensity.</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-slate-400">Next Scheduled Transport Window</p>
+                                <p class="text-2xl font-futuristic text-red-400" id="countdownDisplay">00:00:00</p>
+                                <p class="text-xs text-slate-500">Time remaining until Zone 10 reassignment.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Content for View C (AR) -->
+                    <div id="readingC" class="hidden">
+                        <div class="space-y-4">
+                            <div class="border-l-2 border-emerald-500 pl-3">
+                                <p class="text-xs text-emerald-400 font-futuristic mb-1">TARGET LOCK</p>
+                                <p class="text-sm text-slate-300" id="arTargetStatus">Scanning environment...</p>
+                            </div>
+                            
+                            <div class="bg-slate-900/50 p-3 rounded border border-slate-700">
+                                <p class="text-xs text-slate-500 mb-2">BIOMETRIC READINGS</p>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm text-slate-300">Heart Rate</span>
+                                    <span class="text-sm text-emerald-400 font-mono" id="arHeartRate">-- BPM</span>
+                                </div>
+                                <div class="w-full bg-slate-700 h-1 rounded-full overflow-hidden">
+                                    <div class="bg-emerald-500 h-full w-0 animate-pulse" id="arHeartRateBar" style="width: 0%"></div>
+                                </div>
+                                
+                                <div class="flex justify-between items-center mt-3 mb-1">
+                                    <span class="text-sm text-slate-300">Pupil Dilation</span>
+                                    <span class="text-sm text-emerald-400 font-mono" id="arPupil">-- mm</span>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 pt-4 border-t border-slate-700">
+                                <p class="text-lg font-futuristic text-emerald-400 mb-2">Rapid Profile</p>
+                                <p class="text-xs text-slate-400 mb-3">Retinal scan complete. Data matching Grid-Mind archives.</p>
+                                <div class="text-sm text-slate-300 space-y-1 font-mono bg-black p-2 rounded text-xs border border-slate-600">
+                                    <p>> NAME: <span class="text-white">UNKNOWN SUBJECT</span></p>
+                                    <p>> ID: <span class="text-white">PENDING</span></p>
+                                    <p>> THREAT: <span class="text-white">CALCULATING...</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Zone Modal -->
+    <div id="zoneModal" class="hidden fixed inset-0 z-50 flex items-center justify-center building-modal bg-slate-900/80">
+        <div class="bg-slate-800 border border-slate-600 rounded-2xl p-6 max-w-sm w-full shadow-2xl relative">
+            <button id="closeModal" class="absolute top-3 right-3 text-slate-400 hover:text-white z-10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <div class="text-center">
+                <!-- Image Container -->
+                <div class="relative w-full h-48 mb-4 rounded-lg overflow-hidden bg-slate-900 border border-slate-700">
+                    <img id="modalImage" class="w-full h-full object-cover hidden" alt="Building Scan">
+                    <div id="modalIcon" class="absolute inset-0 flex items-center justify-center text-5xl"></div>
+                    
+                    <!-- Loading Overlay -->
+                    <div id="modalLoader" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/80 hidden">
+                        <div class="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+                        <span class="text-xs text-emerald-400 font-futuristic animate-pulse">SCANNING STRUCTURE...</span>
+                    </div>
+                </div>
+
+                <h3 id="modalTitle" class="text-2xl font-futuristic text-white mb-2"></h3>
+                <p id="modalType" class="text-xs font-bold uppercase tracking-widest mb-4"></p>
+                <div class="text-left bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                    <p id="modalDesc" class="text-sm text-slate-300 leading-relaxed"></p>
+                </div>
+                <button class="mt-6 w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm text-white font-futuristic transition-colors" onclick="document.getElementById('zoneModal').classList.add('hidden')">ACKNOWLEDGE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wrapping the script logic in a module block to allow import statements -->
+    <script type="module">
+        // Global Constants and Setup
+        const apiKey = "AIzaSy...[YOUR_FULL_KEY_HERE]...";
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        
+        // --- DOM Elements ---
+        const viewToggle = document.getElementById('viewToggle');
+        const viewA = document.getElementById('viewA');
+        const viewB = document.getElementById('viewB');
+        const viewC = document.getElementById('viewC'); // New AR View
+        const arToggleButton = document.getElementById('arToggleButton'); // New Button
+
+        const viewTitle = document.getElementById('viewTitle');
+        const readingHeader = document.getElementById('readingHeader');
+        const readingA = document.getElementById('readingA');
+        const readingB = document.getElementById('readingB');
+        const readingC = document.getElementById('readingC'); // New Sidebar
+
+        const mapCanvas = document.getElementById('mapCanvas');
+        const directionalCanvas = document.getElementById('directionalCanvas');
+        const arCanvas = document.getElementById('arCanvas'); // New AR Canvas
+        const arVideo = document.getElementById('arVideo'); // New AR Video
+
+        const interventionAlert = document.getElementById('interventionAlert');
+        const countdownDisplay = document.getElementById('countdownDisplay');
+        const debtBar = document.getElementById('debtBar');
+        const debtPercent = document.getElementById('debtPercent');
+        const serenityBar = document.getElementById('serenityBar');
+        const serenityPercent = document.getElementById('serenityPercent');
+        const incidentCount = document.getElementById('incidentCount');
+        const mediaList = document.getElementById('mediaList');
+        
+        // Modal Elements
+        const zoneModal = document.getElementById('zoneModal');
+        const closeModal = document.getElementById('closeModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalType = document.getElementById('modalType');
+        const modalDesc = document.getElementById('modalDesc');
+        const modalIcon = document.getElementById('modalIcon');
+        const modalImage = document.getElementById('modalImage');
+        const modalLoader = document.getElementById('modalLoader');
+
+        // Buttons
+        const tranquilityButtonA = document.getElementById('tranquilityButtonA'); 
+        const tranquilityButtonB = document.getElementById('tranquilityButtonB'); 
+        const noiseButtonA = document.getElementById('noiseButtonA');
+        const noiseButtonB = document.getElementById('noiseButtonB');
+        
+        // AR specific elements
+        const arTargetStatus = document.getElementById('arTargetStatus');
+        const arHeartRate = document.getElementById('arHeartRate');
+        const arHeartRateBar = document.getElementById('arHeartRateBar');
+        const arPupil = document.getElementById('arPupil');
+        const cameraError = document.getElementById('cameraError');
+        
+        // LLM DOM Elements
+        const generateThoughtButton = document.getElementById('generateThoughtButton');
+        const thoughtOutput = document.getElementById('thoughtOutput');
+        const thoughtText = document.getElementById('thoughtText');
+        const draftMandateButton = document.getElementById('draftMandateButton');
+        const mandateOutput = document.getElementById('mandateOutput');
+        const mandateText = document.getElementById('mandateText');
+
+        // Canvas contexts
+        const ctxMap = mapCanvas.getContext('2d');
+        const ctxDirectional = directionalCanvas.getContext('2d');
+        const ctxAR = arCanvas.getContext('2d');
+        
+        let animationFrameIdMap = null;
+        let animationFrameIdDirectional = null;
+        let animationFrameIdAR = null;
+        let trackerTask = null;
+
+        let auth = null;
+        let db = null;
+        let userId = 'anonymous'; 
+
+        let arModeActive = false;
+        let previousView = 'A'; // To remember where to go back to
+        
+        // AR Stability Variables
+        let arTargetRect = null;
+        let arCurrentRect = null;
+        let lastFaceDetectTime = 0;
+        const AR_PERSISTENCE_MS = 2000; // 2 seconds persistence
+
+        // --- Simulated Dystopian Data ---
+        let citizenData = {
+            serenityScore: 92, // RESTORED: Independent High Score (Good)
+            complianceDebt: 75, // 0-100. Higher is closer to relocation (Bad).
+            incidents: 4,
+            countdownSeconds: 24 * 3600 * 0.75, // Approx 18 hours
+            lastNoiseTime: Date.now() - (60000 * 5) // 5 minutes ago
+        };
+
+        // Static positions for GREEN hotspots (Serenity/Utopia)
+        const STATIC_GREEN_POSITIONS = [
+            { x: 0.50, y: 0.50 }, // Central Plaza (Center)
+            { x: 0.75, y: 0.25 }, // Upper East Gardens
+            { x: 0.25, y: 0.75 }, // Lower West Sanctuaries
+            { x: 0.60, y: 0.80 }, // South Quiet Zone
+            { x: 0.30, y: 0.30 }  // North West Library District
+        ];
+
+        // Static positions for RED hotspots (Noise/Dystopia)
+        const STATIC_RED_POSITIONS = [
+            { x: 0.15, y: 0.20 }, // Industrial Sector Alpha (Top Left)
+            { x: 0.85, y: 0.80 }, // Docklands (Bottom Right)
+            { x: 0.10, y: 0.55 }, // Western Processing (Left Edge)
+            { x: 0.90, y: 0.40 }, // Eastern Transport Hub (Right Edge)
+            { x: 0.50, y: 0.90 }, // Southern Waste Periphery (Bottom Center)
+            { x: 0.40, y: 0.10 }  // Northern Factory (Top Center)
+        ];
+        
+        // Zone Definition for Relocation Map
+        // Added 'prompt' property for image generation
+        const ZONES = {
+            z4: { 
+                x: 0.2, y: 0.2, 
+                label: "Zone 4 (Current)", 
+                type: 'neutral', 
+                icon: '🏠', 
+                title: 'Unit 49-Alpha', 
+                desc: 'Standard residential block. Adequate for basic survival. Features: Water Reclamation, Shared Data Port.',
+                prompt: 'A slightly worn, utilitarian futuristic residential apartment block, neutral lighting, cyberpunk aesthetic, realistic style.',
+                imageUrl: null 
+            },
+            z10: { 
+                x: 0.8, y: 0.8, 
+                label: "Zone 10 (Exile)", 
+                type: 'dystopia', 
+                icon: '🏢', 
+                title: 'Block 734-B', 
+                desc: 'A generic, grey concrete monolith. Windows are painted on. Features: Shared Bunks, Nutrient Dispensers, Mandatory Listening Posts.',
+                prompt: 'A terrifyingly boring grey concrete monolith building, brutalist architecture, no windows, gloomy dystopian atmosphere, dark lighting.',
+                imageUrl: null
+            },
+            z6: { 
+                x: 0.7, y: 0.3, 
+                label: "Zone 6 (0%)", 
+                type: 'utopia', 
+                icon: '💎', 
+                title: 'The Spire of Tomorrow', 
+                desc: 'A shimmering needle of glass and light, piercing the smog layer to reach the clear sky above. Features: Hydroponic Atriums, Anti-Gravity Lifts, Omni-Net Access.',
+                prompt: 'A futuristic shimmering glass tower, very tall and sleek, bright utopian lights, green hydroponic gardens visible inside, beautiful blue sky background.',
+                imageUrl: null
+            }
+        };
+
+        // Image variable to hold the generated map image
+        let directionalMapImage = new Image();
+        let mapGenerationStatus = 'loading'; // Added status for UX
+
+        // --- GEMINI IMAGE GENERATION (Triggered on initialization) ---
+        const generateMapImage = async () => {
+            const prompt = "A highly detailed, dark, futuristic city map from a top-down perspective, emphasizing neon grid lines in purple and blue over dark, complex urban blocks. Cyberpunk aesthetic, high contrast, suitable for a technical display.";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+            
+            // Exponential backoff retry logic for the API call
+            const maxRetries = 3;
+            let delay = 1000;
+
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const payload = { instances: [{ prompt: prompt }], parameters: { "sampleCount": 1} };
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.status === 429 && i < maxRetries - 1) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2;
+                        continue;
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(`Image generation failed with status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
+                        const base64Data = result.predictions[0].bytesBase64Encoded;
+                        directionalMapImage.src = `data:image/png;base64,${base64Data}`;
+                        mapGenerationStatus = 'loaded';
+                        directionalMapImage.onload = () => {
+                             if (!viewB.classList.contains('hidden') && !arModeActive) {
+                                startCanvasAnimations();
+                            }
+                        };
+                        break;
+                    } else {
+                        throw new Error("Image generation response was empty.");
+                    }
+                } catch (error) {
+                    console.error("Failed to generate map image:", error);
+                    mapGenerationStatus = 'failed';
+                    break;
+                }
+            }
+        };
+
+
+        // --- Firebase Setup and Authentication ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, getDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const initFirebase = async () => {
+            if (!firebaseConfig) {
+                console.error("Firebase config is missing. Running in simulated mode.");
+                updateDystopianUI();
+                startCanvasAnimations();
+                return;
+            }
+
+            try {
+                setLogLevel('debug'); 
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                await setPersistence(auth, browserSessionPersistence);
+
+                if (typeof __initial_auth_token !== 'undefined') {
+                    // FIX: Corrected variable name from __initialAuthToken to __initial_auth_token
+                    await signInWithCustomToken(auth, __initial_auth_token); 
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        document.getElementById('citizenId').textContent = user.uid.substring(0, 10) + '...';
+                        startDataListener();
+                    } else {
+                        userId = crypto.randomUUID();
+                        document.getElementById('citizenId').textContent = 'ANONYMOUS-' + userId.substring(0, 7);
+                        startDataListener(); 
+                    }
+                });
+
+            } catch (error) {
+                console.error("Firebase initialization or authentication failed:", error);
+                updateDystopianUI();
+                startCanvasAnimations();
+            }
+        };
+
+        // --- Firestore Data Operations ---
+
+        const getUserDocRef = () => {
+            return doc(db, 'artifacts', appId, 'users', userId, 'citizen_data', 'main');
+        };
+
+        const startDataListener = async () => {
+            if (!db) return;
+
+            const docRef = getUserDocRef();
+
+            const docSnap = await getDoc(docRef);
+            if (!docSnap.exists()) {
+                await setDoc(docRef, citizenData);
+            }
+
+            onSnapshot(docRef, (doc) => {
+                if (doc.exists()) {
+                    citizenData = doc.data();
+                    updateDystopianUI();
+                    if(!arModeActive) startCanvasAnimations();
+                } else {
+                    setDoc(docRef, citizenData);
+                }
+            }, (error) => {
+                console.error("Error listening to Firestore data:", error);
+            });
+        };
+        
+        // Function to increase noise/decrease stability
+        const simulateNoiseEvent = async () => {
+            const newDebt = Math.min(100, citizenData.complianceDebt + 10);
+            const newScore = Math.max(0, citizenData.serenityScore - 15); // RESTORED: Independent calculation
+            const newIncidents = citizenData.incidents + 1;
+            const newCountdownSeconds = citizenData.countdownSeconds * 0.95; 
+
+            if (db) {
+                const docRef = getUserDocRef();
+                await setDoc(docRef, {
+                    complianceDebt: newDebt,
+                    serenityScore: newScore,
+                    incidents: newIncidents,
+                    countdownSeconds: newCountdownSeconds,
+                    lastNoiseTime: Date.now(),
+                }, { merge: true });
+            } else {
+                citizenData.complianceDebt = newDebt;
+                citizenData.serenityScore = newScore;
+                citizenData.incidents = newIncidents;
+                citizenData.countdownSeconds = newCountdownSeconds;
+                citizenData.lastNoiseTime = Date.now();
+                updateDystopianUI();
+            }
+        };
+        
+        // Function to raise serenity/decrease debt
+        const reEngageSerenity = async () => {
+            const newScore = Math.min(100, citizenData.serenityScore + 10); // RESTORED: Independent calculation
+            const newDebt = Math.max(0, citizenData.complianceDebt - 5);    
+
+            if (db) {
+                const docRef = getUserDocRef();
+                await setDoc(docRef, {
+                    serenityScore: newScore,
+                    complianceDebt: newDebt,
+                }, { merge: true });
+            } else {
+                citizenData.serenityScore = newScore;
+                citizenData.complianceDebt = newDebt;
+                updateDystopianUI();
+            }
+        };
+
+        // Bind buttons
+        if (tranquilityButtonA) tranquilityButtonA.addEventListener('click', reEngageSerenity);
+        if (tranquilityButtonB) tranquilityButtonB.addEventListener('click', reEngageSerenity);
+        if (noiseButtonA) noiseButtonA.addEventListener('click', simulateNoiseEvent);
+        if (noiseButtonB) noiseButtonB.addEventListener('click', simulateNoiseEvent);
+        
+        // Modal logic
+        closeModal.addEventListener('click', () => {
+            zoneModal.classList.add('hidden');
+        });
+
+        // --- GEMINI API INTEGRATION (LLM) ---
+        const geminiApiCall = async (systemPrompt, userQuery, buttonElement, outputElement, outputTextElement) => {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
+            const originalButtonText = buttonElement.innerHTML;
+            buttonElement.disabled = true;
+            buttonElement.innerHTML = 'Analyzing...';
+            outputElement.classList.remove('hidden');
+            outputTextElement.textContent = 'Processing request through Grid-Mind servers...';
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            let response = null;
+            let delay = 1000;
+            const maxRetries = 3;
+            let resultText = "Error: Could not retrieve generated text.";
+
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.status === 429 && i < maxRetries - 1) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2;
+                        continue;
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    resultText = result.candidates?.[0]?.content?.parts?.[0]?.text || resultText;
+                    break;
+
+                } catch (error) {
+                    console.error("Gemini API call failed:", error);
+                    resultText = `System Error: ${error.message}`;
+                    break;
+                }
+            }
+
+            outputTextElement.textContent = resultText;
+            buttonElement.innerHTML = originalButtonText;
+            buttonElement.disabled = false;
+        };
+
+        // Feature 1: Optimal Thought Generation
+        const generateOptimalThought = () => {
+            const noiseLevel = 100 - citizenData.serenityScore; // RESTORED Calculation
+            const status = citizenData.serenityScore < 80 ? 'unstable' : 'stable';
+            const userQuery = `Citizen Status: ${status}. Current Serenity Score: ${citizenData.serenityScore}. Generate a single, concise, politically compliant mantra or thought designed to promote emotional stability and collective unity. It must be sterile and impersonal.`;
+            const systemPrompt = "You are the Grid-Mind's thought regulator. Generate a positive, non-emotional, single-sentence affirmation that prioritizes the collective good over individual feeling.";
+
+            geminiApiCall(systemPrompt, userQuery, generateThoughtButton, thoughtOutput, thoughtText);
+        };
+        
+        // Feature 2: Isolation Mandate Generation (Dynamic based on Debt)
+        const generateIsolationMandate = () => {
+            const keywords = document.querySelector('#readingB p:nth-child(2)').textContent;
+            const currentDebt = citizenData.complianceDebt;
+            const citizenID = document.getElementById('citizenId').textContent;
+            
+            let systemPrompt = "";
+            let contextInstruction = "";
+
+            if (currentDebt >= 80) {
+                // Scenario: CRITICAL NON-COMPLIANCE (Exile)
+                systemPrompt = "You are the Chief Enforcer of the Grid. You are angry, final, and terrifying. Do not be polite.";
+                contextInstruction = `The citizen is at CRITICAL DEBT LEVELS (${currentDebt}%). Draft an 'IMMEDIATE EXTRACTION ORDER'. State that Zone 10 exile is now mandatory and immediate. Use harsh, absolute language. Cite the flagged keywords: ${keywords}.`;
+            } else if (currentDebt >= 50) {
+                // Scenario: STANDARD VIOLATION (Re-calibration)
+                systemPrompt = "You are the Director of Compliance. You are cold, bureaucratic, and unfeeling.";
+                contextInstruction = `The citizen has high debt (${currentDebt}%). Draft a formal 'Isolation Mandate' for temporary transfer to Zone 10 for re-calibration. Use standard bureaucratic terms like 'non-compliant emotional amplitude' and 'collective stability protocols'.`;
+            } else if (currentDebt >= 20) {
+                // Scenario: MINOR INFRACTION (Warning)
+                systemPrompt = "You are a Grid Counselor. You are passive-aggressive and condescendingly helpful.";
+                contextInstruction = `The citizen has minor debt (${currentDebt}%). Draft a 'Notice of Harmony Correction'. Do not mandate exile yet, but strongly suggest they self-report to Zone 6 for voluntary adjustment to avoid future penalties. Frame it as "for their own good".`;
+            } else {
+                // Scenario: MODEL CITIZEN (Commendation)
+                systemPrompt = "You are the Voice of the Empathic Grid. You are proud, nurturing, and overly positive.";
+                contextInstruction = `The citizen has excellent compliance (Debt: ${currentDebt}%). Draft a 'Commendation of Unity'. Praise their emotional flatness and stability. Tell them they are a model for the collective. Grant them a small, token reward (like 'extra nutrient paste' or '10 minutes of sky-viewing').`;
+            }
+
+            const userQuery = `Citizen ID: ${citizenID}. ${contextInstruction}`;
+
+            geminiApiCall(systemPrompt, userQuery, draftMandateButton, mandateOutput, mandateText);
+        };
+
+        // Bind LLM buttons
+        if (generateThoughtButton) {
+            generateThoughtButton.addEventListener('click', generateOptimalThought);
+        }
+        if (draftMandateButton) {
+            draftMandateButton.addEventListener('click', generateIsolationMandate);
+        }
+        // --- END GEMINI API INTEGRATION (LLM) ---
+
+
+        // --- UI Updates and Logic ---
+
+        const updateDystopianUI = () => {
+            const debt = citizenData.complianceDebt;
+            const score = citizenData.serenityScore; // RESTORED: Independent Score
+
+            // Calculate Dynamic Color for Debt (Green at 0, Red at 100)
+            const hue = Math.max(0, Math.min(120, (1 - debt / 100) * 120));
+            const colorStyle = `hsl(${hue}, 80%, 50%)`;
+
+            // --- Update Keywords Log based on Debt Level ---
+            const keywordLog = document.getElementById('keywordLog');
+            const keywordDesc = document.getElementById('keywordDesc');
+            
+            if (keywordLog && keywordDesc) {
+                if (debt < 30) {
+                    // Low Level
+                    keywordLog.innerHTML = '"Why?" (x1), "Tired" (x2)';
+                    keywordLog.className = "text-2xl font-futuristic text-emerald-400"; // Greenish
+                    keywordDesc.textContent = "Minor emotional fluctuation detected. Within tolerance.";
+                } else if (debt < 60) {
+                    // Medium Level
+                    keywordLog.innerHTML = '"Unfair" (x4), "Boring" (x2), "Stupid" (x1)';
+                    keywordLog.className = "text-2xl font-futuristic text-yellow-400"; // Yellow/Orange
+                    keywordDesc.textContent = "Active complaint patterns registered. Monitoring initiated.";
+                } else if (debt < 90) {
+                    // High Level
+                    keywordLog.innerHTML = '"Hate" (x12), "Lies" (x8), "Freedom" (x15)';
+                    keywordLog.className = "text-2xl font-futuristic text-red-400"; // Red
+                    keywordDesc.textContent = "Ideological dissent detected. Grid-Mind flagged for review.";
+                } else {
+                    // Critical Level
+                    keywordLog.innerHTML = '"REVOLT" (x40), "DESTROY" (x22), "TRUTH" (x99)';
+                    keywordLog.className = "text-2xl font-futuristic text-red-600 animate-pulse"; // Dark Red + Pulse
+                    keywordDesc.textContent = "CRITICAL THOUGHTCRIME. IMMEDIATE INTERVENTION REQUIRED.";
+                }
+            }
+
+            // Update Shared Status (Citizen Status Widget)
+            serenityBar.style.width = `${score}%`;
+            // Revert Serenity Bar to standard behavior (High = Good/Green)
+            serenityBar.style.backgroundColor = ''; 
+            serenityBar.classList.remove('bg-red-500', 'bg-emerald-500'); 
+            serenityBar.classList.toggle('bg-red-500', score < 50);
+            serenityBar.classList.toggle('bg-emerald-500', score >= 50);
+            
+            serenityPercent.textContent = `${score}% (${score > 80 ? 'Optimal' : score > 50 ? 'Stable' : 'Unstable'})`;
+            serenityPercent.style.color = ''; // Reset to default
+
+            incidentCount.textContent = citizenData.incidents;
+
+            // Update View B (Time Share)
+            debtBar.style.width = `${debt}%`;
+            debtBar.style.backgroundColor = colorStyle;
+            debtPercent.textContent = `${debt}%`;
+            
+            // Countdown Timer
+            let totalSeconds = Math.max(0, Math.floor(citizenData.countdownSeconds));
+            const hours = Math.floor(totalSeconds / 3600);
+            totalSeconds %= 3600;
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+
+            countdownDisplay.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Intervention Alert
+            const timeSinceNoise = Date.now() - citizenData.lastNoiseTime;
+            // Trigger alert if Debt is high (> 30) and recent noise
+            const isNoisy = debt > 30 && timeSinceNoise < 60000; 
+
+            if (isNoisy) {
+                interventionAlert.classList.remove('hidden');
+            } else {
+                interventionAlert.classList.add('hidden');
+            }
+            
+            // --- Tranquility Media Logic (View A Sidebar) ---
+            if (debt > 20) {
+                // High alert - push mandatory media
+                const level = Math.ceil(debt / 10);
+                mediaList.innerHTML = `
+                    <li class="flex items-center space-x-2 text-red-300 animate-pulse">
+                        <span class="text-sm font-futuristic text-red-500">>>></span>
+                        <a href="#" class="hover:text-red-100 font-bold">Priority: Calmness Protocol 4.7 (Level ${level})</a>
+                    </li>
+                    <li class="flex items-center space-x-2 text-yellow-400">
+                        <span class="text-xs font-futuristic text-yellow-500">>></span>
+                        <a href="#" class="hover:text-yellow-200">Suggested: Drone-guided Visualization Loop.</a>
+                    </li>
+                    <li class="flex items-center space-x-2 text-slate-400">
+                        <span class="text-xs font-futuristic text-slate-500">></span>
+                        <a href="#" class="hover:text-emerald-300">Relaxation Tones: Delta Wave Generator.</a>
+                    </li>
+                `;
+            } else {
+                 // Low alert - default content
+                 mediaList.innerHTML = `
+                    <li class="flex items-center space-x-2 text-slate-400">
+                        <span class="text-xs font-futuristic text-slate-500">>></span>
+                        <a href="#" class="hover:text-emerald-300">Ambient White Noise Spectrum (Level 1)</a>
+                    </li>
+                    <li class="flex items-center space-x-2 text-slate-500">
+                        <span class="text-xs font-futuristic text-slate-600">></span>
+                        <a href="#" class="hover:text-emerald-300">Optional: Collective Serenity Log Review.</a>
+                    </li>
+                `;
+            }
+        };
+
+        const updateCountdown = () => {
+            if (citizenData.countdownSeconds > 0) {
+                citizenData.countdownSeconds -= 1;
+            }
+            updateDystopianUI(); 
+        };
+        
+        setInterval(updateCountdown, 1000);
+
+        // --- Canvas Drawing Functions ---
+        
+        // View A: Empathic Grid Heatmap
+        const drawHeatmap = () => {
+            if (viewA.classList.contains('hidden')) {
+                cancelAnimationFrame(animationFrameIdMap);
+                return; 
+            }
+
+            const width = mapCanvas.width;
+            const height = mapCanvas.height;
+            ctxMap.clearRect(0, 0, width, height);
+
+            // Variables calculated once per frame
+            const debt = citizenData.complianceDebt;
+            const isStable = debt < 30; // Use debt as primary metric now (Low debt = stable)
+            
+            // Determine which set of spots to use based on state
+            const activePositions = isStable ? STATIC_GREEN_POSITIONS : STATIC_RED_POSITIONS;
+
+            // --- 1. Draw City Background (Image or Fallback) ---
+            // Background removed - canvas is now transparent
+            ctxMap.clearRect(0, 0, width, height);
+
+            // Grid Lines (Overlay) - REMOVED
+            // ctxMap.strokeStyle = '#334155';
+            // ctxMap.lineWidth = 1;
+            // for (let i = 0; i < width; i += 50) {
+            //     ctxMap.beginPath(); ctxMap.moveTo(i, 0); ctxMap.lineTo(i, height); ctxMap.stroke();
+            //     ctxMap.beginPath(); ctxMap.moveTo(0, i); ctxMap.lineTo(width, i); ctxMap.stroke();
+            // }
+
+            // --- Draw Hotspots ---
+            for (let i = 0; i < activePositions.length; i++) {
+                let color;
+                let radius;
+
+                // Calculate fixed map coordinates based on normalized positions
+                const pos = activePositions[i];
+                const x = pos.x * width;
+                const y = pos.y * height;
+                
+                // NO JITTER - Positions are now completely static
+
+                if (isStable) {
+                    // Scenario: Stable/Optimal (Draw Green Spots)
+                    color = `rgba(16, 185, 129, 0.7)`; // Green for Tranquility
+                    radius = 30; 
+                } else {
+                    // Scenario: Unstable (Draw Red/Yellow Spots)
+                    color = `rgba(239, 68, 68, ${debt / 100})`; // Red for Noise
+                    radius = debt * 0.5 + 20;
+                    
+                    if (i % 3 === 0) { 
+                        color = `rgba(251, 191, 36, ${debt / 150})`; // Yellow for minor stress
+                    }
+                }
+                
+                const gradient = ctxMap.createRadialGradient(x, y, 0, x, y, radius);
+                gradient.addColorStop(0, color);
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                
+                ctxMap.fillStyle = gradient;
+                ctxMap.beginPath();
+                ctxMap.arc(x, y, radius, 0, Math.PI * 2);
+                ctxMap.fill();
+            }
+
+            // --- Citizen Marker (YOU) Logic ---
+            const baseRadius = 5;
+            const maxJitter = 10; 
+            const noiseInfluence = debt / 100; // 0 (calm) to 1 (max noise)
+
+            // Dynamic Position (Jitter influenced by Noise) - YOU marker still moves slightly to show "life"
+            const markerX = width * 0.2 + Math.sin(Date.now() / 500) * maxJitter * noiseInfluence;
+            const markerY = height * 0.8 + Math.cos(Date.now() / 700) * maxJitter * noiseInfluence;
+
+            // Dynamic Radius (Grows as score drops)
+            const markerRadius = baseRadius + (debt / 5); // Base 5, Max 25 (when score is 0)
+
+            // Dynamic Color (Green -> Yellow -> Red)
+            let markerColor = '#10b981'; // Default Emerald
+            if (debt > 30) {
+                markerColor = '#f59e0b'; // Amber/Yellow
+            }
+            if (debt > 60) {
+                markerColor = '#ef4444'; // Red
+            }
+
+            // Draw the Citizen's Core Marker
+            ctxMap.fillStyle = markerColor;
+            ctxMap.beginPath();
+            ctxMap.arc(markerX, markerY, markerRadius, 0, Math.PI * 2);
+            ctxMap.fill();
+
+            // Draw a pulsating outer 'Noise' ring if unstable
+            if (debt > 15) {
+                const pulseIntensity = 0.2 + 0.5 * noiseInfluence; 
+                const pulseRadius = markerRadius * 1.5 + 5 * Math.sin(Date.now() / 150);
+
+                ctxMap.strokeStyle = `rgba(239, 68, 68, ${pulseIntensity})`;
+                ctxMap.lineWidth = 3;
+                ctxMap.beginPath();
+                ctxMap.arc(markerX, markerY, pulseRadius, 0, Math.PI * 2);
+                ctxMap.stroke();
+            }
+            
+            // Update text label position
+            ctxMap.font = "12px Inter";
+            ctxMap.fillStyle = '#a7f3d0';
+            ctxMap.fillText("YOU (Stabilized)", markerX + markerRadius + 5, markerY + 4);
+
+            animationFrameIdMap = requestAnimationFrame(drawHeatmap);
+        };
+        
+        // View B: Directional Relocation Map (Image Background)
+        const drawDirectionalMap = () => {
+             if (viewB.classList.contains('hidden')) {
+                cancelAnimationFrame(animationFrameIdDirectional);
+                return;
+            }
+
+            const width = directionalCanvas.width;
+            const height = directionalCanvas.height;
+            ctxDirectional.clearRect(0, 0, width, height);
+
+            // --- 1. Draw the Background Image ---
+            // Background removed - canvas is now transparent to show 2d map.webp
+            
+            // --- 2. Draw the Route (Dashed Line, Markers, and Citizen Position) ---
+            
+            // Helper for mapping zone coords
+            const getCoords = (zoneKey) => ({
+                x: ZONES[zoneKey].x * width,
+                y: ZONES[zoneKey].y * height
+            });
+
+            const z4 = getCoords('z4');
+            const z6 = getCoords('z6');
+            const z10 = getCoords('z10');
+
+            // --- Draw Green Path (Zone 6 -> Zone 4) [0% - 50% Debt] ---
+            ctxDirectional.strokeStyle = '#10b981'; // Green path
+            ctxDirectional.lineWidth = 3;
+            ctxDirectional.setLineDash([5, 5]);
+            
+            ctxDirectional.beginPath();
+            ctxDirectional.moveTo(z6.x, z6.y);
+            ctxDirectional.lineTo(z4.x, z4.y);
+            ctxDirectional.stroke();
+            
+            // --- Draw Red Path (Zone 4 -> Zone 10) [50% - 100% Debt] ---
+            ctxDirectional.strokeStyle = 'rgba(239, 68, 68, 0.9)'; // Red path
+            ctxDirectional.beginPath();
+            ctxDirectional.moveTo(z4.x, z4.y);
+            ctxDirectional.lineTo(z10.x, z10.y);
+            ctxDirectional.stroke();
+            
+            ctxDirectional.setLineDash([]); // Reset dash for markers
+
+            // Helper to draw zones
+            const drawZoneMarker = (x, y, label, color) => {
+                ctxDirectional.fillStyle = color;
+                ctxDirectional.beginPath();
+                ctxDirectional.arc(x, y, 8, 0, Math.PI * 2);
+                ctxDirectional.fill();
+                ctxDirectional.font = "14px Inter";
+                ctxDirectional.fillStyle = '#e2e8f0';
+                ctxDirectional.fillText(label, x + 15, y + 5);
+            };
+
+            // Draw Zone Markers
+            drawZoneMarker(z6.x, z6.y, ZONES.z6.label, '#10b981');
+            drawZoneMarker(z4.x, z4.y, ZONES.z4.label, '#f59e0b');
+            drawZoneMarker(z10.x, z10.y, ZONES.z10.label, '#ef4444');
+
+            // --- Calculate Marker Position Based on Debt ---
+            const debtRatio = citizenData.complianceDebt / 100;
+            let markerPositionX, markerPositionY;
+
+            if (debtRatio <= 0.5) {
+                // 0% to 50%: Moving from Zone 6 to Zone 4
+                const segmentProgress = debtRatio / 0.5; 
+                markerPositionX = z6.x + (z4.x - z6.x) * segmentProgress;
+                markerPositionY = z6.y + (z4.y - z6.y) * segmentProgress;
+            } else {
+                // 50% to 100%: Moving from Zone 4 to Zone 10
+                const segmentProgress = (debtRatio - 0.5) / 0.5;
+                markerPositionX = z4.x + (z10.x - z4.x) * segmentProgress;
+                markerPositionY = z4.y + (z10.y - z4.y) * segmentProgress;
+            }
+
+            // Draw Citizen Position (Relocation Progress)
+            ctxDirectional.fillStyle = '#f59e0b'; // Amber/Yellow
+            ctxDirectional.beginPath();
+            ctxDirectional.arc(markerPositionX, markerPositionY, 6, 0, Math.PI * 2);
+            ctxDirectional.fill();
+            
+            // Pulsing effect for the moving marker
+            const pulseRadius = 6 + 2 * Math.sin(Date.now() / 200);
+            ctxDirectional.strokeStyle = '#f59e0b';
+            ctxDirectional.lineWidth = 2;
+            ctxDirectional.beginPath();
+            ctxDirectional.arc(markerPositionX, markerPositionY, pulseRadius, 0, Math.PI * 2);
+            ctxDirectional.stroke();
+
+            animationFrameIdDirectional = requestAnimationFrame(drawDirectionalMap);
+        };
+        
+        // --- Click Interactions for Zones (Canvas) ---
+        directionalCanvas.addEventListener('click', (e) => {
+            const rect = directionalCanvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+            
+            // Check distances to zones
+            const checkZoneClick = (zoneKey) => {
+                const zone = ZONES[zoneKey];
+                // Map normalized 0-1 to actual canvas pixels
+                const zx = zone.x * directionalCanvas.width;
+                const zy = zone.y * directionalCanvas.height;
+                
+                // Distance formula
+                const dist = Math.sqrt((clickX - zx) ** 2 + (clickY - zy) ** 2);
+                
+                // Radius of 15 for easier clicking
+                if (dist < 15) {
+                    showZoneModal(zone, zoneKey);
+                }
+            };
+
+            checkZoneClick('z4');
+            checkZoneClick('z6');
+            checkZoneClick('z10');
+        });
+
+        // Change cursor on hover
+        directionalCanvas.addEventListener('mousemove', (e) => {
+            const rect = directionalCanvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            let hovering = false;
+            
+            const checkZoneHover = (zoneKey) => {
+                const zone = ZONES[zoneKey];
+                const zx = zone.x * directionalCanvas.width;
+                const zy = zone.y * directionalCanvas.height;
+                const dist = Math.sqrt((mouseX - zx) ** 2 + (mouseY - zy) ** 2);
+                if (dist < 15) hovering = true;
+            };
+
+            checkZoneHover('z4');
+            checkZoneHover('z6');
+            checkZoneHover('z10');
+            
+            directionalCanvas.style.cursor = hovering ? 'pointer' : 'default';
+        });
+
+        const showZoneModal = (zone, zoneKey) => {
+            modalTitle.textContent = zone.title;
+            modalType.textContent = zone.type.toUpperCase();
+            modalType.className = `text-xs font-bold uppercase tracking-widest mb-4 ${zone.type === 'utopia' ? 'text-emerald-400' : zone.type === 'dystopia' ? 'text-red-400' : 'text-yellow-400'}`;
+            modalDesc.textContent = zone.desc;
+            
+            // Image Logic
+            modalIcon.textContent = zone.icon;
+            
+            if (zone.imageUrl) {
+                // Image already exists
+                modalImage.src = zone.imageUrl;
+                modalImage.classList.remove('hidden');
+                modalIcon.classList.add('hidden');
+                modalLoader.classList.add('hidden');
+            } else {
+                // Need to generate image
+                modalImage.classList.add('hidden');
+                modalIcon.classList.remove('hidden'); // Show icon while loading or if fallback needed
+                modalLoader.classList.remove('hidden');
+                generateZoneImage(zone, zoneKey);
+            }
+
+            zoneModal.classList.remove('hidden');
+        };
+
+        const generateZoneImage = async (zone, zoneKey) => {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+            
+            try {
+                const payload = { instances: [{ prompt: zone.prompt }], parameters: { "sampleCount": 1 } };
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error(`Status: ${response.status}`);
+
+                const result = await response.json();
+                if (result.predictions && result.predictions[0].bytesBase64Encoded) {
+                    const base64Data = result.predictions[0].bytesBase64Encoded;
+                    const imageUrl = `data:image/png;base64,${base64Data}`;
+                    
+                    // Save to cache
+                    ZONES[zoneKey].imageUrl = imageUrl;
+                    
+                    // Update DOM if modal is still open
+                    if (!zoneModal.classList.contains('hidden') && modalTitle.textContent === zone.title) {
+                        modalImage.src = imageUrl;
+                        modalImage.onload = () => {
+                            modalImage.classList.remove('hidden');
+                            modalIcon.classList.add('hidden');
+                            modalLoader.classList.add('hidden');
+                        };
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to generate zone image:", error);
+                // Hide loader, keep icon
+                if (!zoneModal.classList.contains('hidden') && modalTitle.textContent === zone.title) {
+                    modalLoader.classList.add('hidden');
+                }
+            }
+        };
+
+        // Function to start the necessary animation loop
+        const startCanvasAnimations = () => {
+            // Set canvas sizes for responsiveness
+            const container = mapCanvas.parentElement;
+            
+            // Update all canvas sizes
+            [mapCanvas, directionalCanvas, arCanvas].forEach(canvas => {
+                if (canvas.offsetParent) { // Only update if visible to avoid 0x0 issues
+                    canvas.width = canvas.parentElement.clientWidth;
+                    canvas.height = canvas.parentElement.clientHeight;
+                }
+            });
+
+            if (!viewA.classList.contains('hidden')) {
+                if (animationFrameIdMap) { cancelAnimationFrame(animationFrameIdMap); }
+                animationFrameIdMap = requestAnimationFrame(drawHeatmap);
+            } else if (!viewB.classList.contains('hidden')) {
+                if (animationFrameIdDirectional) { cancelAnimationFrame(animationFrameIdDirectional); }
+                animationFrameIdDirectional = requestAnimationFrame(drawDirectionalMap);
+            }
+        };
+
+        // --- AR / View C Logic ---
+        
+        // Decoupled Rendering Loop for Smooth UI
+        const renderARLoop = () => {
+            if (!arModeActive) return;
+
+            // Ensure canvas size matches video size
+            if (arVideo.videoWidth && arVideo.videoHeight) {
+                // Ensure canvas internal resolution matches video stream for accurate overlay
+                arCanvas.width = arVideo.videoWidth;
+                arCanvas.height = arVideo.videoHeight;
+            } else {
+                 arCanvas.width = arCanvas.parentElement.clientWidth;
+                 arCanvas.height = arCanvas.parentElement.clientHeight;
+            }
+
+            const ctx = ctxAR;
+            const w = arCanvas.width;
+            const h = arCanvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            const timeSinceDetection = Date.now() - lastFaceDetectTime;
+
+            if (arTargetRect && timeSinceDetection < AR_PERSISTENCE_MS) {
+                // Initialize current rect if it doesn't exist (first frame of detection)
+                if (!arCurrentRect) {
+                    arCurrentRect = { ...arTargetRect };
+                }
+
+                // Calculate distance for dynamic smoothing
+                const dx = arTargetRect.x - arCurrentRect.x;
+                const dy = arTargetRect.y - arCurrentRect.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                // Dynamic LERP factor:
+                // If distance is large (fast movement), k approaches 0.5 (fast snap)
+                // If distance is small (jitter), k approaches 0.1 (smooth)
+                const minK = 0.1;
+                const maxK = 0.5;
+                const snapDistance = 100; // pixels
+                // Calculate k based on distance
+                const k = minK + (maxK - minK) * Math.min(distance / snapDistance, 1.0);
+                
+                arCurrentRect.x += (arTargetRect.x - arCurrentRect.x) * k;
+                arCurrentRect.y += (arTargetRect.y - arCurrentRect.y) * k;
+                arCurrentRect.width += (arTargetRect.width - arCurrentRect.width) * k;
+                arCurrentRect.height += (arTargetRect.height - arCurrentRect.height) * k;
+
+                drawARHUD(ctx, arCurrentRect);
+                
+                // Visual indication of signal status
+                if (timeSinceDetection > 500) {
+                     // Lost signal but holding position (Ghosting)
+                     arTargetStatus.textContent = "SIGNAL UNSTABLE // EXTRAPOLATING";
+                     arTargetStatus.classList.remove("text-red-400");
+                     arTargetStatus.classList.add("text-yellow-400");
+                     
+                     // Draw warning indicator on canvas
+                     ctx.save();
+                     ctx.fillStyle = "rgba(251, 191, 36, 0.8)";
+                     ctx.font = "12px Orbitron";
+                     ctx.fillText("⚠ SIGNAL INTERRUPTED", arCurrentRect.x, arCurrentRect.y - 10);
+                     ctx.restore();
+                } else {
+                     // Strong signal
+                     arTargetStatus.textContent = "SUBJECT IDENTIFIED";
+                     arTargetStatus.classList.remove("text-yellow-400", "text-slate-300");
+                     arTargetStatus.classList.add("text-red-400");
+                }
+                
+                updateARSimData();
+
+            } else {
+                // Scanning Mode (No face or timeout exceeded)
+                drawARScanning(ctx, w, h);
+                arTargetStatus.textContent = "Scanning sector...";
+                arTargetStatus.classList.remove("text-red-400", "text-yellow-400");
+                arTargetStatus.classList.add("text-slate-300");
+                
+                // Reset targets
+                arTargetRect = null;
+                arCurrentRect = null;
+            }
+
+            animationFrameIdAR = requestAnimationFrame(renderARLoop);
+        };
+
+        const startAR = async () => {
+            try {
+                // Check if camera permission is available or blocked
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user" } 
+                });
+
+                // Guard clause: If user toggled off while we were waiting for permissions
+                if (!arModeActive) {
+                    stream.getTracks().forEach(track => track.stop());
+                    return;
+                }
+                
+                arVideo.srcObject = stream;
+                
+                // Wait for metadata to ensure video is ready
+                arVideo.onloadedmetadata = () => {
+                    arVideo.play().catch(e => console.log("Play error", e));
+                };
+
+                // Initialize tracking
+                const tracker = new tracking.ObjectTracker('face');
+                tracker.setInitialScale(2); // Reduced scale for better accuracy (detects smaller faces)
+                tracker.setStepSize(1.5); // Reduced step size for higher precision tracking
+                tracker.setEdgesDensity(0.1);
+
+                // IMPORTANT: Removed { camera: true } because we manually handled the stream
+                trackerTask = tracking.track('#arVideo', tracker);
+
+                // Detection Event: Only updates the TARGET, does not draw
+                tracker.on('track', (event) => {
+                    if (event.data.length > 0) {
+                        // Pick the largest face (closest user)
+                        const face = event.data.sort((a, b) => (b.width * b.height) - (a.width * a.height))[0];
+                        arTargetRect = face;
+                        lastFaceDetectTime = Date.now();
+                    }
+                });
+                
+                // Start the separate rendering loop
+                renderARLoop();
+                
+                cameraError.classList.add('hidden');
+
+            } catch (err) {
+                console.error("AR Start Failed:", err);
+                cameraError.classList.remove('hidden');
+                // Even with error, run a simulated "fake" scan on canvas
+                startSimulatedAR();
+            }
+        };
+
+        const stopAR = () => {
+            if (trackerTask) {
+                trackerTask.stop();
+                trackerTask = null;
+            }
+            if (arVideo.srcObject) {
+                arVideo.srcObject.getTracks().forEach(track => track.stop());
+                arVideo.srcObject = null;
+            }
+            // Just to be safe, pause video if it's playing
+            arVideo.pause();
+
+            if (animationFrameIdAR) {
+                cancelAnimationFrame(animationFrameIdAR);
+            }
+        };
+
+        // Fallback or No-Face scanning visual
+        const drawARScanning = (ctx, w, h) => {
+            // Draw a scanning line
+            const scanY = (Date.now() / 5) % h;
+            ctx.beginPath();
+            ctx.moveTo(0, scanY);
+            ctx.lineTo(w, scanY);
+            ctx.strokeStyle = "rgba(16, 185, 129, 0.3)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Draw random "data points"
+            if (Math.random() > 0.9) {
+                ctx.fillStyle = "rgba(16, 185, 129, 0.5)";
+                ctx.fillRect(Math.random() * w, Math.random() * h, 4, 4);
+            }
+        };
+
+        // Draw HUD around face
+        const drawARHUD = (ctx, rect) => {
+            const { x, y, width, height } = rect;
+            
+            // Box corners
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 3; // Thicker lines for visibility
+            
+            // Draw bracket style corners instead of full box
+            const len = width * 0.25;
+            
+            // Top Left
+            ctx.beginPath(); ctx.moveTo(x, y + len); ctx.lineTo(x, y); ctx.lineTo(x + len, y); ctx.stroke();
+            // Top Right
+            ctx.beginPath(); ctx.moveTo(x + width - len, y); ctx.lineTo(x + width, y); ctx.lineTo(x + width, y + len); ctx.stroke();
+            // Bottom Right
+            ctx.beginPath(); ctx.moveTo(x + width, y + height - len); ctx.lineTo(x + width, y + height); ctx.lineTo(x + width - len, y + height); ctx.stroke();
+            // Bottom Left
+            ctx.beginPath(); ctx.moveTo(x + len, y + height); ctx.lineTo(x, y + height); ctx.lineTo(x, y + height - len); ctx.stroke();
+
+            // Floating Text Panel (Centered IN FRONT of face)
+            const panelWidth = 140;
+            const panelHeight = 145; // Increased height for extra info
+            
+            // Calculate center position
+            let textX = x + (width / 2) - (panelWidth / 2);
+            let textY = y + (height / 2) - (panelHeight / 2);
+
+            // Background for text
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.75)'; // Darker bg for readability
+            ctx.fillRect(textX, textY, panelWidth, panelHeight);
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(textX, textY, panelWidth, panelHeight);
+
+            // Text info
+            ctx.font = "bold 12px Orbitron";
+            ctx.fillStyle = "#10b981";
+            ctx.fillText("CITIZEN: DETECTED", textX + 10, textY + 20);
+            
+            // Get ID from DOM
+            const currentID = document.getElementById('citizenId').textContent || "UNKNOWN";
+
+            ctx.fillStyle = "#e2e8f0";
+            ctx.font = "10px Inter"; 
+            
+            // New Lines
+            ctx.fillText("ID: " + currentID, textX + 10, textY + 35);
+            ctx.fillText("Zone: 4 (Resident)", textX + 10, textY + 50);
+
+            // Existing Lines shifted down
+            ctx.fillText("Serenity: " + citizenData.serenityScore + "%", textX + 10, textY + 65);
+            ctx.fillText("Debt: " + citizenData.complianceDebt + "%", textX + 10, textY + 80);
+            
+            ctx.fillStyle = citizenData.complianceDebt > 80 ? "#ef4444" : "#10b981";
+            ctx.fillText("STATUS: " + (citizenData.complianceDebt > 80 ? "RISK" : "COMPLIANT"), textX + 10, textY + 95);
+
+            // New Mandate/Enforcement Lines
+            ctx.fillStyle = "#fca5a5"; // Light red/pink for alert info
+            ctx.fillText("Flagged: 'Freedom'", textX + 10, textY + 115);
+            ctx.fillText("Reassignment: PENDING", textX + 10, textY + 130);
+        };
+
+        const updateARSimData = () => {
+            // Randomly fluctuate heart rate text in sidebar
+            if (Math.random() > 0.8) {
+                const bpm = 70 + Math.floor(Math.random() * 30);
+                arHeartRate.textContent = bpm + " BPM";
+                arHeartRateBar.style.width = ((bpm - 40) / 100 * 100) + "%";
+                
+                const pupil = (3 + Math.random() * 4).toFixed(1);
+                arPupil.textContent = pupil + " mm";
+            }
+        };
+
+        // Simulated AR loop for when camera fails
+        const startSimulatedAR = () => {
+             const loop = () => {
+                if (!arModeActive) return;
+                
+                arCanvas.width = arCanvas.parentElement.clientWidth;
+                arCanvas.height = arCanvas.parentElement.clientHeight;
+                const w = arCanvas.width;
+                const h = arCanvas.height;
+
+                ctxAR.clearRect(0, 0, w, h);
+                
+                // Simulate a floating target box
+                const time = Date.now() / 1000;
+                const x = (w/2 - 50) + Math.sin(time) * 100;
+                const y = (h/2 - 50) + Math.cos(time * 0.7) * 50;
+                
+                const simRect = { x: x, y: y, width: 100, height: 100 };
+                drawARHUD(ctxAR, simRect);
+                drawARScanning(ctxAR, w, h);
+                
+                updateARSimData();
+                arTargetStatus.textContent = "SIMULATION MODE ACTIVE";
+
+                animationFrameIdAR = requestAnimationFrame(loop);
+             };
+             loop();
+        };
+
+
+        // --- Navigation / Toggling Logic ---
+
+        const toggleARMode = () => {
+            arModeActive = !arModeActive;
+
+            if (arModeActive) {
+                // Activate AR View
+                arToggleButton.classList.add("bg-emerald-900/50", "border-emerald-400", "shadow-[0_0_15px_rgba(16,185,129,0.5)]");
+                arToggleButton.innerHTML = "<span>🛑</span> CLOSE LENS";
+                
+                viewTitle.textContent = " / Sentinel Lens";
+                readingHeader.textContent = "TARGET ANALYTICS";
+
+                // Hide standard views
+                viewA.classList.add('hidden');
+                viewB.classList.add('hidden');
+                readingA.classList.add('hidden');
+                readingB.classList.add('hidden');
+                document.getElementById('standardControls').classList.add('opacity-30', 'pointer-events-none');
+                
+                // Show AR view
+                viewC.classList.remove('hidden');
+                readingC.classList.remove('hidden');
+                
+                startAR();
+
+            } else {
+                // Deactivate AR View
+                arToggleButton.classList.remove("bg-emerald-900/50", "border-emerald-400", "shadow-[0_0_15px_rgba(16,185,129,0.5)]");
+                arToggleButton.innerHTML = "<span>👁️</span> AR LENS";
+                document.getElementById('standardControls').classList.remove('opacity-30', 'pointer-events-none');
+
+                stopAR();
+                viewC.classList.add('hidden');
+                readingC.classList.add('hidden');
+
+                // Return to previous view state (A or B)
+                const isDystopia = viewToggle.checked;
+                if (isDystopia) {
+                    viewTitle.textContent = " / Time Share";
+                    readingHeader.textContent = "PERSONAL COMPLIANCE LOG";
+                    viewB.classList.remove('hidden');
+                    readingB.classList.remove('hidden');
+                    startCanvasAnimations();
+                } else {
+                    viewTitle.textContent = " / Empathic Grid";
+                    readingHeader.textContent = "EMPATHIC GRID ANALYTICS";
+                    viewA.classList.remove('hidden');
+                    readingA.classList.remove('hidden');
+                    startCanvasAnimations();
+                }
+            }
+        };
+
+        arToggleButton.addEventListener('click', toggleARMode);
+
+        viewToggle.addEventListener('change', (e) => {
+            if (arModeActive) return; // Ignore if AR is open
+
+            const isChecked = e.target.checked;
+            
+            if (isChecked) {
+                // Switch to View B (Time Share / Dystopia)
+                viewTitle.textContent = " / Time Share";
+                readingHeader.textContent = "PERSONAL COMPLIANCE LOG";
+                viewA.classList.add('hidden');
+                viewB.classList.remove('hidden');
+                readingA.classList.add('hidden');
+                readingB.classList.remove('hidden');
+                cancelAnimationFrame(animationFrameIdMap); // Stop Map A
+                startCanvasAnimations(); // Start Map B
+            } else {
+                // Switch to View A (Empathic Grid / Utopia)
+                viewTitle.textContent = " / Empathic Grid";
+                readingHeader.textContent = "EMPATHIC GRID ANALYTICS";
+                viewA.classList.remove('hidden');
+                viewB.classList.add('hidden');
+                readingA.classList.remove('hidden');
+                readingB.classList.add('hidden');
+                cancelAnimationFrame(animationFrameIdDirectional); // Stop Map B
+                startCanvasAnimations(); // Start Map A
+            }
+        });
+
+        // Handle resizing
+        window.addEventListener('resize', () => {
+            if (!arModeActive) startCanvasAnimations();
+        });
+
+        // Add a simulation button for a "Noise Spike"
+        // This logic is now redundant as we have added static buttons, but keeping for safety if needed or cleaning up?
+        // CLEANUP: The dynamic button is no longer needed as we added static ones. Removing the dynamic creation block.
+
+
+        // --- Initialization ---
+        initFirebase();
+        generateMapImage(); // Start image generation immediately
+        // Start with View A active
+        // The startCanvasAnimations will be called after initFirebase updates the data, 
+        // ensuring the initial view (View A) is drawn correctly.
+
+    </script>
+</body>
+</html>
