@@ -1088,13 +1088,13 @@
             if (arTargetStatus) {
                 // When serenity is high (close to 100%), status is COMPLIANT
                 // When serenity is low (close to 0%), status is RISK
-                // When serenity is around 50%, status is DISRUPTIVE
+                // When serenity is around 40-60%, status is DISRUPTIVE
                 
-                if (score >= 70) {
+                if (score >= 60) {
                     // High serenity = Compliant (green)
                     arTargetStatus.textContent = 'COMPLIANT';
                     arTargetStatus.className = 'text-emerald-400 font-futuristic';
-                } else if (score >= 30) {
+                } else if (score >= 40) {
                     // Mid-range serenity = Disruptive (yellow)
                     arTargetStatus.textContent = 'DISRUPTIVE';
                     arTargetStatus.className = 'text-yellow-400 font-futuristic';
