@@ -1646,20 +1646,25 @@
                 const dy = arTargetRect.y - arCurrentRect.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
 
-                // Dynamic LERP factor - fluid tracking that follows head movement smoothly
-                // If distance is large (fast movement), k approaches 0.85 (responsive snap)
-                // If distance is small (micro-adjustments), k approaches 0.35 (smooth flow)
-                const minK = 0.35; // Higher minimum for smoother micro-movements
-                const maxK = 0.85; // Higher maximum for better responsiveness
-                const snapDistance = 60; // pixels - lower threshold for faster tracking
-                // Calculate k based on distance with exponential curve for natural feel
-                const normalizedDistance = Math.min(distance / snapDistance, 1.0);
-                const k = minK + (maxK - minK) * Math.pow(normalizedDistance, 0.8);
+                // Adaptive LERP - smooth tracking with intelligent response to movement
+                // Uses velocity-aware smoothing for natural face tracking on webcams
+                const minK = 0.45; // Higher base smoothing for stable tracking
+                const maxK = 0.92; // Very responsive for quick movements
+                const snapDistance = 50; // Tighter threshold for faster response
                 
-                arCurrentRect.x += (arTargetRect.x - arCurrentRect.x) * k;
-                arCurrentRect.y += (arTargetRect.y - arCurrentRect.y) * k;
-                arCurrentRect.width += (arTargetRect.width - arCurrentRect.width) * k;
-                arCurrentRect.height += (arTargetRect.height - arCurrentRect.height) * k;
+                // Exponential easing curve for natural feel - faster ramp-up
+                const normalizedDistance = Math.min(distance / snapDistance, 1.0);
+                const easedDistance = Math.pow(normalizedDistance, 0.7); // Steeper curve
+                const k = minK + (maxK - minK) * easedDistance;
+                
+                // Apply adaptive smoothing factor based on recent movement
+                const movementFactor = Math.min(distance / 100, 1.0); // Scale 0-1 based on px distance
+                const finalK = k * (0.8 + 0.2 * movementFactor); // Boost k during movement
+                
+                arCurrentRect.x += (arTargetRect.x - arCurrentRect.x) * finalK;
+                arCurrentRect.y += (arTargetRect.y - arCurrentRect.y) * finalK;
+                arCurrentRect.width += (arTargetRect.width - arCurrentRect.width) * finalK;
+                arCurrentRect.height += (arTargetRect.height - arCurrentRect.height) * finalK;
 
                 drawARHUD(ctx, arCurrentRect);
                 
@@ -1713,11 +1718,11 @@
                     arVideo.play().catch(e => console.log("Play error", e));
                 };
 
-                // Initialize tracking
+                // Initialize tracking with optimized parameters for computer cameras
                 const tracker = new tracking.ObjectTracker('face');
-                tracker.setInitialScale(2); // Reduced scale for better accuracy (detects smaller faces)
-                tracker.setStepSize(1.5); // Reduced step size for higher precision tracking
-                tracker.setEdgesDensity(0.1);
+                tracker.setInitialScale(1.5); // Lower scale for detecting faces at typical webcam distance
+                tracker.setStepSize(1.2); // Smaller steps for more precise tracking
+                tracker.setEdgesDensity(0.15); // Increased edge density for better face boundary detection
 
                 // IMPORTANT: Removed { camera: true } because we manually handled the stream
                 trackerTask = tracking.track('#arVideo', tracker);
