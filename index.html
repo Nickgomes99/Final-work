@@ -275,7 +275,7 @@
                             </button>
                             
                             <!-- Dropdown Menu -->
-                            <div id="arControlsDropdown" class="hidden absolute top-full mt-2 w-56 flex flex-col gap-3">
+                            <div id="arControlsDropdown" class="absolute top-full mt-2 w-56 flex-col gap-3" style="display: none;">
                                 <!-- Voluntary Compliance -->
                                 <div class="bg-slate-900/95 p-3 rounded-xl border border-emerald-500/50">
                                     <p class="text-xs font-futuristic text-emerald-400 mb-2 text-center">Voluntary Compliance</p>
@@ -861,12 +861,12 @@
         
         if (arControlsToggle && arControlsDropdown && arDropdownArrow) {
             arControlsToggle.addEventListener('click', () => {
-                const isHidden = arControlsDropdown.classList.contains('hidden');
+                const isHidden = arControlsDropdown.style.display === 'none';
                 if (isHidden) {
-                    arControlsDropdown.classList.remove('hidden');
+                    arControlsDropdown.style.display = 'flex';
                     arDropdownArrow.style.transform = 'rotate(180deg)';
                 } else {
-                    arControlsDropdown.classList.add('hidden');
+                    arControlsDropdown.style.display = 'none';
                     arDropdownArrow.style.transform = 'rotate(0deg)';
                 }
             });
