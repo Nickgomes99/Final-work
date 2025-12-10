@@ -1030,9 +1030,16 @@
                 // NO JITTER - Positions are now completely static
 
                 // Color transition based on Serenity Score:
-                // 0%: Red spots
-                // 50%: Yellow spots
-                // 100%: Bright Green spots
+                // 0%: Red spots (large)
+                // 50%: Yellow spots (smallest)
+                // 100%: Bright Green spots (large)
+                
+                // Calculate radius based on distance from 50% (U-shaped curve)
+                const distanceFrom50 = Math.abs(serenityScore - 50);
+                const radiusMultiplier = distanceFrom50 / 50; // 0 at 50%, 1 at 0% or 100%
+                const minRadius = 35;
+                const maxRadius = 80;
+                radius = minRadius + (radiusMultiplier * (maxRadius - minRadius));
                 
                 if (serenityScore < 50) {
                     // Low serenity (0-50%): Red transitioning to Yellow
@@ -1042,7 +1049,6 @@
                     const blue = Math.floor(68 + (-32 * transitionProgress)); // 68 -> 36
                     const opacity = 0.7 + transitionProgress * 0.2;
                     color = `rgba(${red}, ${green}, ${blue}, ${opacity})`;
-                    radius = 80 - transitionProgress * 25; // 80 -> 55 (red spots are big, yellow is smaller)
                 } else {
                     // High serenity (50-100%): Yellow transitioning to Bright Green
                     const transitionProgress = (serenityScore - 50) / 50; // 0 to 1
@@ -1051,7 +1057,6 @@
                     const blue = Math.floor(36 + 93 * transitionProgress); // 36 -> 129
                     const opacity = 0.9 + transitionProgress * 0.1; // 0.9 -> 1.0 for maximum brightness
                     color = `rgba(${red}, ${green}, ${blue}, ${opacity})`;
-                    radius = 55 + transitionProgress * 25; // 55 -> 80 (green spots grow big again)
                 }
                 
                 const gradient = ctxMap.createRadialGradient(x, y, 0, x, y, radius);
