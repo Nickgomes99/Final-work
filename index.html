@@ -390,12 +390,11 @@
             </button>
             <div class="text-center">
                 <!-- Image Container -->
-                <div class="relative w-full h-48 mb-4 rounded-lg overflow-hidden bg-slate-900 border border-slate-700">
+                <div class="relative w-full h-48 mb-4 rounded-lg overflow-hidden border border-slate-700">
                     <img id="modalImage" class="w-full h-full object-cover" alt="Building Scan" style="display: block;">
-                    <div id="modalIcon" class="absolute inset-0 flex items-center justify-center text-5xl hidden"></div>
                     
                     <!-- Loading Overlay -->
-                    <div id="modalLoader" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/80 hidden">
+                    <div id="modalLoader" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 hidden">
                         <div class="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-2"></div>
                         <span class="text-xs text-emerald-400 font-futuristic animate-pulse">SCANNING STRUCTURE...</span>
                     </div>
@@ -451,7 +450,6 @@
         const modalTitle = document.getElementById('modalTitle');
         const modalType = document.getElementById('modalType');
         const modalDesc = document.getElementById('modalDesc');
-        const modalIcon = document.getElementById('modalIcon');
         const modalImage = document.getElementById('modalImage');
         const modalLoader = document.getElementById('modalLoader');
 
@@ -1246,24 +1244,22 @@
             if (zone.imageUrl) {
                 // Image already exists - show it directly
                 modalImage.src = zone.imageUrl;
-                modalImage.classList.remove('hidden');
+                modalImage.style.display = 'block';
+                modalLoader.classList.add('hidden');
                 
                 // Ensure image loads properly
                 modalImage.onload = () => {
-                    modalImage.classList.remove('hidden');
-                    modalIcon.classList.add('hidden');
+                    modalLoader.classList.add('hidden');
                 };
                 
                 // Fallback if image fails to load
                 modalImage.onerror = () => {
-                    modalImage.classList.add('hidden');
-                    modalIcon.textContent = zone.icon;
-                    modalIcon.classList.remove('hidden');
+                    console.error('Failed to load image:', zone.imageUrl);
+                    modalLoader.classList.add('hidden');
                 };
             } else {
                 // Need to generate image
-                modalIcon.textContent = zone.icon;
-                modalIcon.classList.remove('hidden');
+                modalImage.style.display = 'none';
                 modalLoader.classList.remove('hidden');
                 generateZoneImage(zone, zoneKey);
             }
@@ -1296,16 +1292,13 @@
                     // Update DOM if modal is still open
                     if (!zoneModal.classList.contains('hidden') && modalTitle.textContent === zone.title) {
                         modalImage.src = imageUrl;
-                        modalImage.onload = () => {
-                            modalImage.classList.remove('hidden');
-                            modalIcon.classList.add('hidden');
-                            modalLoader.classList.add('hidden');
-                        };
+                        modalImage.style.display = 'block';
+                        modalLoader.classList.add('hidden');
                     }
                 }
             } catch (error) {
                 console.error("Failed to generate zone image:", error);
-                // Hide loader, keep icon
+                // Hide loader on error
                 if (!zoneModal.classList.contains('hidden') && modalTitle.textContent === zone.title) {
                     modalLoader.classList.add('hidden');
                 }
