@@ -1035,25 +1035,37 @@
                     
                     // Color transition based on Serenity Score
                     if (colorType === 'red') {
-                        // Red spots: Brightest at 0%, fades as score increases
+                        // Red spots: Brightest at 0%, fades as score increases, invisible at 100%
                         const transitionProgress = serenityScore / 50;
                         const red = 239;
                         const green = Math.floor(68 + (183 * transitionProgress));
                         const blue = Math.floor(68 + (-32 * transitionProgress));
-                        const opacity = Math.max(0.2, 0.9 - (serenityScore / 100) * 0.7);
+                        const opacity = Math.max(0, 0.95 - (serenityScore / 100) * 0.95); // 0.95 at 0%, 0 at 100%
                         color = `rgba(${red}, ${green}, ${blue}, ${opacity})`;
                     } else if (colorType === 'yellow') {
-                        // Yellow spots: Brightest at 50%, fades at extremes
+                        // Yellow spots: Only visible between 20-80%, brightest at 50%
+                        const distanceFrom50 = Math.abs(serenityScore - 50);
                         const distanceFrom50Norm = 1 - (distanceFrom50 / 50);
-                        const opacity = 0.3 + distanceFrom50Norm * 0.7;
+                        // Fade out completely at 0% and 100%
+                        let opacity = 0;
+                        if (serenityScore > 20 && serenityScore < 80) {
+                            const fadeRange = 30; // 20-50 fade in, 50-80 fade out
+                            if (serenityScore < 50) {
+                                // Fade in from 20 to 50
+                                opacity = ((serenityScore - 20) / fadeRange) * 0.9;
+                            } else {
+                                // Fade out from 50 to 80
+                                opacity = ((80 - serenityScore) / fadeRange) * 0.9;
+                            }
+                        }
                         color = `rgba(251, 191, 36, ${opacity})`;
                     } else { // green
-                        // Green spots: Brightest at 100%, fades as score decreases
+                        // Green spots: Brightest at 100%, fades as score decreases, invisible at 0%
                         const transitionProgress = (serenityScore - 50) / 50;
                         const red = Math.floor(251 - 235 * transitionProgress);
                         const green = Math.floor(191 + (-6 * transitionProgress));
                         const blue = Math.floor(36 + 93 * transitionProgress);
-                        const opacity = Math.max(0.2, (serenityScore / 100) * 0.9);
+                        const opacity = Math.max(0, (serenityScore / 100) * 0.95); // 0 at 0%, 0.95 at 100%
                         color = `rgba(${red}, ${green}, ${blue}, ${opacity})`;
                     }
                     
