@@ -1042,23 +1042,23 @@
                         const blue = Math.floor(68 + (-32 * transitionProgress));
                         const opacity = Math.max(0, 0.95 - (serenityScore / 100) * 0.95); // 0.95 at 0%, 0 at 100%
                         color = `rgba(${red}, ${green}, ${blue}, ${opacity})`;
+                        
+                        // Skip drawing if invisible
+                        if (opacity === 0) continue;
                     } else if (colorType === 'yellow') {
-                        // Yellow spots: Only visible between 20-80%, brightest at 50%
-                        const distanceFrom50 = Math.abs(serenityScore - 50);
-                        const distanceFrom50Norm = 1 - (distanceFrom50 / 50);
-                        // Fade out completely at 0% and 100%
+                        // Yellow spots: ONLY visible between 25-75%, completely invisible at 0% and 100%
                         let opacity = 0;
-                        if (serenityScore > 20 && serenityScore < 80) {
-                            const fadeRange = 30; // 20-50 fade in, 50-80 fade out
-                            if (serenityScore < 50) {
-                                // Fade in from 20 to 50
-                                opacity = ((serenityScore - 20) / fadeRange) * 0.9;
-                            } else {
-                                // Fade out from 50 to 80
-                                opacity = ((80 - serenityScore) / fadeRange) * 0.9;
-                            }
+                        
+                        if (serenityScore >= 25 && serenityScore <= 75) {
+                            const distanceFrom50 = Math.abs(serenityScore - 50);
+                            // Linear fade: 0 at 25/75, max at 50
+                            opacity = (1 - (distanceFrom50 / 25)) * 0.9;
                         }
+                        
                         color = `rgba(251, 191, 36, ${opacity})`;
+                        
+                        // Skip drawing if invisible
+                        if (opacity === 0) continue;
                     } else { // green
                         // Green spots: Brightest at 100%, fades as score decreases, invisible at 0%
                         const transitionProgress = (serenityScore - 50) / 50;
@@ -1067,6 +1067,9 @@
                         const blue = Math.floor(36 + 93 * transitionProgress);
                         const opacity = Math.max(0, (serenityScore / 100) * 0.95); // 0 at 0%, 0.95 at 100%
                         color = `rgba(${red}, ${green}, ${blue}, ${opacity})`;
+                        
+                        // Skip drawing if invisible
+                        if (opacity === 0) continue;
                     }
                     
                     const gradient = ctxMap.createRadialGradient(x, y, 0, x, y, radius);
