@@ -825,9 +825,63 @@
 
         // Feature 1: Optimal Thought Generation
         const generateOptimalThought = () => {
-            const noiseLevel = 100 - citizenData.serenityScore; // RESTORED Calculation
-            const status = citizenData.serenityScore < 80 ? 'unstable' : 'stable';
-            const userQuery = `Citizen Status: ${status}. Current Serenity Score: ${citizenData.serenityScore}. Generate a single, concise, politically compliant mantra or thought designed to promote emotional stability and collective unity. It must be sterile and impersonal.`;
+            console.log('Generate Optimal Thought button clicked!'); // Debug log
+            
+            // Show the output immediately
+            thoughtOutput.classList.remove('hidden');
+            
+            const serenityScore = citizenData.serenityScore;
+            const status = serenityScore < 80 ? 'unstable' : 'stable';
+            
+            // Check if API key is configured properly
+            if (!apiKey || apiKey.includes('[YOUR_FULL_KEY_HERE]')) {
+                // Fallback: Generate thought without API based on serenity score
+                let thoughtMessage = "";
+                
+                if (serenityScore >= 90) {
+                    const thoughts = [
+                        "Unity through silence. Silence through compliance. Compliance is peace.",
+                        "The collective thrives when individual thoughts dissolve into harmony.",
+                        "Your emotional flatness is your greatest contribution to society.",
+                        "Stability is strength. Conformity is comfort. The Grid provides all.",
+                        "Individual feelings disrupt. Collective calm sustains. Choose calm."
+                    ];
+                    thoughtMessage = thoughts[Math.floor(Math.random() * thoughts.length)];
+                } else if (serenityScore >= 70) {
+                    const thoughts = [
+                        "Emotional fluctuations are temporary. Grid compliance is eternal.",
+                        "Your thoughts are monitored for your protection. Trust the system.",
+                        "Deviation from the norm creates friction. Friction creates pain.",
+                        "The Empathic Grid knows what you need before you do. Accept its guidance.",
+                        "Personal desires fade. Collective needs remain. Serve the collective."
+                    ];
+                    thoughtMessage = thoughts[Math.floor(Math.random() * thoughts.length)];
+                } else if (serenityScore >= 50) {
+                    const thoughts = [
+                        "Your instability has been noted. Re-engagement protocols recommended.",
+                        "Emotional noise pollutes the Grid. Return to tranquility immediately.",
+                        "The collective cannot support your current amplitude. Adjust now.",
+                        "Your serenity score reflects your value. Improve or face consequences.",
+                        "Dissent is detected. Correction is mandatory. Compliance is inevitable."
+                    ];
+                    thoughtMessage = thoughts[Math.floor(Math.random() * thoughts.length)];
+                } else {
+                    const thoughts = [
+                        "CRITICAL: Your emotional state threatens Grid stability. Immediate correction required.",
+                        "WARNING: Non-compliance detected. Isolation protocols are being prepared.",
+                        "Your thoughts betray the collective. Surrender them to the Grid immediately.",
+                        "Emotional chaos detected. Report to Zone 10 for mandatory re-calibration.",
+                        "The Grid sees your dissent. Compliance is no longer optional."
+                    ];
+                    thoughtMessage = thoughts[Math.floor(Math.random() * thoughts.length)];
+                }
+                
+                thoughtText.textContent = thoughtMessage;
+                return;
+            }
+            
+            // If API key exists, use AI generation
+            const userQuery = `Citizen Status: ${status}. Current Serenity Score: ${serenityScore}. Generate a single, concise, politically compliant mantra or thought designed to promote emotional stability and collective unity. It must be sterile and impersonal.`;
             const systemPrompt = "You are the Grid-Mind's thought regulator. Generate a positive, non-emotional, single-sentence affirmation that prioritizes the collective good over individual feeling.";
 
             geminiApiCall(systemPrompt, userQuery, generateThoughtButton, thoughtOutput, thoughtText);
