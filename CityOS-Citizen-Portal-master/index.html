@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CityOS Citizen Portal</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>🏛️ CityOS</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="../index.html" style="background: #10b981; padding: 0.5rem 1rem; border-radius: 0.5rem; color: white;">← Back to Main Portal</a></li>
+                    <li><a href="#dashboard">Dashboard</a></li>
+                    <li><a href="#services">Services</a></li>
+                    <li><a href="#bills">Bills</a></li>
+                    <li><a href="#announcements">Announcements</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Hero Section -->
+        <section class="hero">
+            <h2>Welcome to CityOS Citizen Portal</h2>
+            <p>Your one-stop solution for all city services and information</p>
+            <button class="btn-primary" onclick="showLogin()">Get Started</button>
+        </section>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section">
+            <h2>Dashboard</h2>
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>📋 Service Requests</h3>
+                    <p class="stat">3 Active</p>
+                    <button class="btn-secondary" onclick="viewServices()">View Details</button>
+                </div>
+                <div class="card">
+                    <h3>💳 Pending Bills</h3>
+                    <p class="stat">$245.50</p>
+                    <button class="btn-secondary" onclick="viewBills()">Pay Now</button>
+                </div>
+                <div class="card">
+                    <h3>📢 New Announcements</h3>
+                    <p class="stat">5 Updates</p>
+                    <button class="btn-secondary" onclick="viewAnnouncements()">Read More</button>
+                </div>
+                <div class="card">
+                    <h3>👤 Profile</h3>
+                    <p class="stat">Complete</p>
+                    <button class="btn-secondary" onclick="viewProfile()">Manage</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Services Section -->
+        <section id="services" class="section">
+            <h2>City Services</h2>
+            <div class="services-grid">
+                <div class="service-card">
+                    <h3>🚧 Report Issue</h3>
+                    <p>Report potholes, street lights, graffiti, and more</p>
+                    <button class="btn-primary" onclick="reportIssue()">Submit Request</button>
+                </div>
+                <div class="service-card">
+                    <h3>🏗️ Building Permits</h3>
+                    <p>Apply for building and renovation permits online</p>
+                    <button class="btn-primary" onclick="applyPermit()">Apply Now</button>
+                </div>
+                <div class="service-card">
+                    <h3>🚗 Parking Services</h3>
+                    <p>Manage parking permits and pay violations</p>
+                    <button class="btn-primary" onclick="manageParkring()">Manage</button>
+                </div>
+                <div class="service-card">
+                    <h3>♻️ Waste Management</h3>
+                    <p>View collection schedules and request pickups</p>
+                    <button class="btn-primary" onclick="wasteInfo()">Learn More</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bills Section -->
+        <section id="bills" class="section">
+            <h2>Utility Bills</h2>
+            <div class="bills-list">
+                <div class="bill-item">
+                    <div class="bill-info">
+                        <h3>Water Bill</h3>
+                        <p>Due: December 1, 2025</p>
+                    </div>
+                    <div class="bill-amount">
+                        <span class="amount">$85.50</span>
+                        <button class="btn-pay">Pay</button>
+                    </div>
+                </div>
+                <div class="bill-item">
+                    <div class="bill-info">
+                        <h3>Property Tax</h3>
+                        <p>Due: December 15, 2025</p>
+                    </div>
+                    <div class="bill-amount">
+                        <span class="amount">$160.00</span>
+                        <button class="btn-pay">Pay</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Announcements Section -->
+        <section id="announcements" class="section">
+            <h2>City Announcements</h2>
+            <div class="announcements-list">
+                <div class="announcement-item">
+                    <div class="date">Nov 20, 2025</div>
+                    <h3>Holiday Schedule Changes</h3>
+                    <p>City offices will be closed for Thanksgiving from November 27-29.</p>
+                </div>
+                <div class="announcement-item">
+                    <div class="date">Nov 18, 2025</div>
+                    <h3>Road Construction Update</h3>
+                    <p>Main Street reconstruction project is ahead of schedule and will complete by December.</p>
+                </div>
+                <div class="announcement-item">
+                    <div class="date">Nov 15, 2025</div>
+                    <h3>Community Event: Winter Festival</h3>
+                    <p>Join us for the annual Winter Festival on December 10th at City Park.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="section">
+            <h2>Contact City Hall</h2>
+            <div class="contact-grid">
+                <div class="contact-card">
+                    <h3>📞 Phone</h3>
+                    <p>(555) 123-4567</p>
+                </div>
+                <div class="contact-card">
+                    <h3>📧 Email</h3>
+                    <p>info@cityos.gov</p>
+                </div>
+                <div class="contact-card">
+                    <h3>📍 Address</h3>
+                    <p>123 City Hall Plaza<br>Downtown, ST 12345</p>
+                </div>
+                <div class="contact-card">
+                    <h3>⏰ Hours</h3>
+                    <p>Mon-Fri: 8AM - 5PM<br>Sat-Sun: Closed</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 CityOS. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+        </div>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
