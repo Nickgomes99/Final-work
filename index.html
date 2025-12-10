@@ -1011,72 +1011,67 @@
             const serenityScore = citizenData.serenityScore;
             const isStable = debt < 30; // Use debt as primary metric now (Low debt = stable)
             
-            // Determine which set of spots to use - ALWAYS show green positions, but color changes
-            const activePositions = STATIC_GREEN_POSITIONS;
-
             // --- 1. Draw City Background (Image or Fallback) ---
             // Background removed - canvas is now transparent
             ctxMap.clearRect(0, 0, width, height);
 
-            // Grid Lines (Overlay) - REMOVED
-            // ctxMap.strokeStyle = '#334155';
-            // ctxMap.lineWidth = 1;
-            // for (let i = 0; i < width; i += 50) {
-            //     ctxMap.beginPath(); ctxMap.moveTo(i, 0); ctxMap.lineTo(i, height); ctxMap.stroke();
-            //     ctxMap.beginPath(); ctxMap.moveTo(0, i); ctxMap.lineTo(width, i); ctxMap.stroke();
-            // }
-
-            // --- Draw Hotspots ---
-            for (let i = 0; i < activePositions.length; i++) {
-                let color;
-                let radius;
-
-                // Calculate fixed map coordinates based on normalized positions
-                const pos = activePositions[i];
-                const x = pos.x * width;
-                const y = pos.y * height;
-                
-                // NO JITTER - Positions are now completely static
-
-                // Color transition based on Serenity Score:
-                // 0%: Red spots (large)
-                // 50%: Yellow spots (smallest)
-                // 100%: Bright Green spots (large)
-                
-                // Calculate radius based on distance from 50% (U-shaped curve)
-                const distanceFrom50 = Math.abs(serenityScore - 50);
-                const radiusMultiplier = distanceFrom50 / 50; // 0 at 50%, 1 at 0% or 100%
-                const minRadius = 35;
-                const maxRadius = 80;
-                radius = minRadius + (radiusMultiplier * (maxRadius - minRadius));
-                
-                if (serenityScore < 50) {
-                    // Low serenity (0-50%): Red transitioning to Yellow
-                    const transitionProgress = serenityScore / 50; // 0 to 1
-                    const red = 239;
-                    const green = Math.floor(68 + (183 * transitionProgress)); // 68 -> 251
-                    const blue = Math.floor(68 + (-32 * transitionProgress)); // 68 -> 36
-                    const opacity = 0.7 + transitionProgress * 0.2;
-                    color = `rgba(${red}, ${green}, ${blue}, ${opacity})`;
-                } else {
-                    // High serenity (50-100%): Yellow transitioning to Bright Green
-                    const transitionProgress = (serenityScore - 50) / 50; // 0 to 1
-                    const red = Math.floor(251 - 235 * transitionProgress); // 251 -> 16
-                    const green = Math.floor(191 + (-6 * transitionProgress)); // 191 -> 185
-                    const blue = Math.floor(36 + 93 * transitionProgress); // 36 -> 129
-                    const opacity = 0.9 + transitionProgress * 0.1; // 0.9 -> 1.0 for maximum brightness
-                    color = `rgba(${red}, ${green}, ${blue}, ${opacity})`;
+            // --- Draw All Three Types of Hotspots in Different Locations ---
+            
+            // Helper function to draw spots with dynamic color/size
+            const drawSpots = (positions, baseColor, colorType) => {
+                for (let i = 0; i < positions.length; i++) {
+                    const pos = positions[i];
+                    const x = pos.x * width;
+                    const y = pos.y * height;
+                    
+                    let color, radius;
+                    
+                    // Calculate radius based on distance from 50% (U-shaped curve)
+                    const distanceFrom50 = Math.abs(serenityScore - 50);
+                    const radiusMultiplier = distanceFrom50 / 50;
+                    const minRadius = 35;
+                    const maxRadius = 80;
+                    radius = minRadius + (radiusMultiplier * (maxRadius - minRadius));
+                    
+                    // Color transition based on Serenity Score
+                    if (colorType === 'red') {
+                        // Red spots: Brightest at 0%, fades as score increases
+                        const transitionProgress = serenityScore / 50;
+                        const red = 239;
+                        const green = Math.floor(68 + (183 * transitionProgress));
+                        const blue = Math.floor(68 + (-32 * transitionProgress));
+                        const opacity = Math.max(0.2, 0.9 - (serenityScore / 100) * 0.7);
+                        color = `rgba(${red}, ${green}, ${blue}, ${opacity})`;
+                    } else if (colorType === 'yellow') {
+                        // Yellow spots: Brightest at 50%, fades at extremes
+                        const distanceFrom50Norm = 1 - (distanceFrom50 / 50);
+                        const opacity = 0.3 + distanceFrom50Norm * 0.7;
+                        color = `rgba(251, 191, 36, ${opacity})`;
+                    } else { // green
+                        // Green spots: Brightest at 100%, fades as score decreases
+                        const transitionProgress = (serenityScore - 50) / 50;
+                        const red = Math.floor(251 - 235 * transitionProgress);
+                        const green = Math.floor(191 + (-6 * transitionProgress));
+                        const blue = Math.floor(36 + 93 * transitionProgress);
+                        const opacity = Math.max(0.2, (serenityScore / 100) * 0.9);
+                        color = `rgba(${red}, ${green}, ${blue}, ${opacity})`;
+                    }
+                    
+                    const gradient = ctxMap.createRadialGradient(x, y, 0, x, y, radius);
+                    gradient.addColorStop(0, color);
+                    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                    
+                    ctxMap.fillStyle = gradient;
+                    ctxMap.beginPath();
+                    ctxMap.arc(x, y, radius, 0, Math.PI * 2);
+                    ctxMap.fill();
                 }
-                
-                const gradient = ctxMap.createRadialGradient(x, y, 0, x, y, radius);
-                gradient.addColorStop(0, color);
-                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-                
-                ctxMap.fillStyle = gradient;
-                ctxMap.beginPath();
-                ctxMap.arc(x, y, radius, 0, Math.PI * 2);
-                ctxMap.fill();
-            }
+            };
+            
+            // Draw all three types
+            drawSpots(STATIC_RED_POSITIONS, null, 'red');
+            drawSpots(STATIC_YELLOW_POSITIONS, null, 'yellow');
+            drawSpots(STATIC_GREEN_POSITIONS, null, 'green');
 
             // --- Citizen Marker (YOU) Logic ---
             const baseRadius = 5;
