@@ -264,6 +264,27 @@
                          <p class="text-slate-500 text-[10px]">BIO-METRIC ID: ENABLED</p>
                     </div>
                     
+                    <!-- Control Buttons (Bottom Center) -->
+                    <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20 flex gap-4">
+                        <!-- Voluntary Compliance -->
+                        <div class="bg-slate-900/90 p-3 rounded-xl border border-emerald-500/50">
+                            <p class="text-xs font-futuristic text-emerald-400 mb-2 text-center">Voluntary Compliance</p>
+                            <button id="tranquilityButtonC" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 font-futuristic rounded-lg transition-colors text-sm flex items-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.007 12.007 0 002.944 12c0 2.899 1.127 5.568 3.04 7.618a12.007 12.007 0 0015.032-7.618 11.955 11.955 0 01-3.04-8.618z"></path></svg>
+                                <span>Re-Engage</span>
+                            </button>
+                        </div>
+                        
+                        <!-- System Test -->
+                        <div class="bg-slate-900/90 p-3 rounded-xl border border-red-500/50">
+                            <p class="text-xs font-futuristic text-red-400 mb-2 text-center">System Test</p>
+                            <button id="noiseButtonC" class="px-4 py-2 bg-red-600 hover:bg-red-700 font-futuristic rounded-lg transition-colors text-sm flex items-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+                                <span>Noise Spike</span>
+                            </button>
+                        </div>
+                    </div>
+                    
                     <!-- Camera Error Message -->
                     <div id="cameraError" class="hidden absolute inset-0 flex items-center justify-center bg-slate-900/90 z-20">
                         <div class="text-center p-6">
@@ -490,6 +511,8 @@
         const tranquilityButtonB = document.getElementById('tranquilityButtonB'); 
         const noiseButtonA = document.getElementById('noiseButtonA');
         const noiseButtonB = document.getElementById('noiseButtonB');
+        const tranquilityButtonC = document.getElementById('tranquilityButtonC');
+        const noiseButtonC = document.getElementById('noiseButtonC');
         
         // AR specific elements
         const arTargetStatus = document.getElementById('arTargetStatus');
@@ -814,8 +837,10 @@
         // Bind buttons
         if (tranquilityButtonA) tranquilityButtonA.addEventListener('click', reEngageSerenity);
         if (tranquilityButtonB) tranquilityButtonB.addEventListener('click', reEngageSerenity);
+        if (tranquilityButtonC) tranquilityButtonC.addEventListener('click', reEngageSerenity);
         if (noiseButtonA) noiseButtonA.addEventListener('click', simulateNoiseEvent);
         if (noiseButtonB) noiseButtonB.addEventListener('click', simulateNoiseEvent);
+        if (noiseButtonC) noiseButtonC.addEventListener('click', simulateNoiseEvent);
         
         // Modal logic
         closeModal.addEventListener('click', () => {
