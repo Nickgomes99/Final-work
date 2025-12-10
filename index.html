@@ -391,8 +391,8 @@
             <div class="text-center">
                 <!-- Image Container -->
                 <div class="relative w-full h-48 mb-4 rounded-lg overflow-hidden bg-slate-900 border border-slate-700">
-                    <img id="modalImage" class="w-full h-full object-cover hidden" alt="Building Scan">
-                    <div id="modalIcon" class="absolute inset-0 flex items-center justify-center text-5xl"></div>
+                    <img id="modalImage" class="w-full h-full object-cover" alt="Building Scan" style="display: block;">
+                    <div id="modalIcon" class="absolute inset-0 flex items-center justify-center text-5xl hidden"></div>
                     
                     <!-- Loading Overlay -->
                     <div id="modalLoader" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/80 hidden">
@@ -1238,19 +1238,32 @@
             modalType.className = `text-xs font-bold uppercase tracking-widest mb-4 ${zone.type === 'utopia' ? 'text-emerald-400' : zone.type === 'dystopia' ? 'text-red-400' : 'text-yellow-400'}`;
             modalDesc.textContent = zone.desc;
             
-            // Image Logic
-            modalIcon.textContent = zone.icon;
+            // Reset visibility states first
+            modalLoader.classList.add('hidden');
+            modalIcon.classList.add('hidden');
+            modalImage.classList.add('hidden');
             
             if (zone.imageUrl) {
-                // Image already exists
+                // Image already exists - show it directly
                 modalImage.src = zone.imageUrl;
                 modalImage.classList.remove('hidden');
-                modalIcon.classList.add('hidden');
-                modalLoader.classList.add('hidden');
+                
+                // Ensure image loads properly
+                modalImage.onload = () => {
+                    modalImage.classList.remove('hidden');
+                    modalIcon.classList.add('hidden');
+                };
+                
+                // Fallback if image fails to load
+                modalImage.onerror = () => {
+                    modalImage.classList.add('hidden');
+                    modalIcon.textContent = zone.icon;
+                    modalIcon.classList.remove('hidden');
+                };
             } else {
                 // Need to generate image
-                modalImage.classList.add('hidden');
-                modalIcon.classList.remove('hidden'); // Show icon while loading or if fallback needed
+                modalIcon.textContent = zone.icon;
+                modalIcon.classList.remove('hidden');
                 modalLoader.classList.remove('hidden');
                 generateZoneImage(zone, zoneKey);
             }
