@@ -394,7 +394,7 @@
                                 <div class="text-sm text-slate-300 space-y-1 font-mono bg-black p-2 rounded text-xs border border-slate-600">
                                     <p>> NAME: <span class="text-white">CITIZEN-47A9</span></p>
                                     <p>> ID: <span class="text-white">1995-A7342</span></p>
-                                    <p>> THREAT: <span class="text-red-400">ELEVATED</span></p>
+                                    <p>> THREAT: <span id="arThreatLevel" class="text-red-400">ELEVATED</span></p>
                                 </div>
                             </div>
                             
@@ -497,6 +497,7 @@
         const arHeartRateBar = document.getElementById('arHeartRateBar');
         const arPupil = document.getElementById('arPupil');
         const cameraError = document.getElementById('cameraError');
+        const arThreatLevel = document.getElementById('arThreatLevel');
         const qrcodeContainer = document.getElementById('qrcode');
         
         // Generate QR Code for AR Access
@@ -1057,6 +1058,23 @@
             serenityPercent.style.color = ''; // Reset to default
 
             incidentCount.textContent = citizenData.incidents;
+            
+            // Update AR Threat Level based on Serenity Score (inverse relationship)
+            if (arThreatLevel) {
+                if (score >= 80) {
+                    arThreatLevel.textContent = 'MINIMAL';
+                    arThreatLevel.className = 'text-emerald-400';
+                } else if (score >= 50) {
+                    arThreatLevel.textContent = 'MODERATE';
+                    arThreatLevel.className = 'text-yellow-400';
+                } else if (score >= 20) {
+                    arThreatLevel.textContent = 'ELEVATED';
+                    arThreatLevel.className = 'text-orange-400';
+                } else {
+                    arThreatLevel.textContent = 'CRITICAL';
+                    arThreatLevel.className = 'text-red-500 animate-pulse';
+                }
+            }
 
             // Update View B (Time Share)
             debtBar.style.width = `${debt}%`;
