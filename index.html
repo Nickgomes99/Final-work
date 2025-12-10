@@ -1616,12 +1616,12 @@
                 const dy = arTargetRect.y - arCurrentRect.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
 
-                // Dynamic LERP factor:
-                // If distance is large (fast movement), k approaches 0.5 (fast snap)
-                // If distance is small (jitter), k approaches 0.1 (smooth)
-                const minK = 0.1;
-                const maxK = 0.5;
-                const snapDistance = 100; // pixels
+                // Dynamic LERP factor - improved tracking responsiveness
+                // If distance is large (fast movement), k approaches 0.7 (faster snap)
+                // If distance is small (jitter), k approaches 0.2 (smoother)
+                const minK = 0.2;
+                const maxK = 0.7;
+                const snapDistance = 80; // pixels - reduced for faster response
                 // Calculate k based on distance
                 const k = minK + (maxK - minK) * Math.min(distance / snapDistance, 1.0);
                 
@@ -1770,17 +1770,17 @@
             ctx.beginPath(); ctx.moveTo(x + len, y + height); ctx.lineTo(x, y + height); ctx.lineTo(x, y + height - len); ctx.stroke();
 
             // Floating Text Panel (Scaled to face size and perfectly centered)
-            // Make the panel size proportional to the detected face
-            const panelWidth = width * 1.0; // 100% of face width for smaller box
-            const panelHeight = height * 0.9; // 90% of face height for smaller box
+            // Make the panel size proportional to the detected face - smaller and more compact
+            const panelWidth = width * 0.75; // 75% of face width for compact box
+            const panelHeight = height * 0.65; // 65% of face height for compact box
             
-            // Calculate position: center on the nose (horizontal center, 60% down from top)
+            // Calculate position: center on the face center (not nose)
             const faceCenterX = x + (width / 2);
-            const noseY = y + (height * 0.6); // Nose is typically 60% down from top of face detection
+            const faceCenterY = y + (height / 2); // Center of the face
             
-            // Center the panel perfectly on the nose position
+            // Center the panel perfectly on the face center
             let textX = Math.round(faceCenterX - (panelWidth / 2));
-            let textY = Math.round(noseY - (panelHeight / 2));
+            let textY = Math.round(faceCenterY - (panelHeight / 2));
 
             // Background for text
             ctx.fillStyle = 'rgba(0, 0, 0, 0.9)'; // Very dark bg for maximum readability
