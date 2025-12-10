@@ -9,6 +9,8 @@
     <!-- Load Tracking.js for Face Detection -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/tracking-min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/data/face-min.js"></script>
+    <!-- Load QRCode.js for QR Code Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <style>
         /* Custom font for a futuristic look */
@@ -262,6 +264,12 @@
                          <p class="text-slate-500 text-[10px]">BIO-METRIC ID: ENABLED</p>
                     </div>
                     
+                    <!-- QR Code Section (Bottom-left) -->
+                    <div class="absolute bottom-4 left-4 bg-slate-900/90 p-3 rounded-xl border border-emerald-500/50 z-20">
+                        <div id="qrcode" class="bg-white p-2 rounded"></div>
+                        <p class="text-emerald-400 font-futuristic text-[10px] mt-2 text-center">SCAN FOR AR ACCESS</p>
+                    </div>
+                    
                     <!-- Camera Error Message -->
                     <div id="cameraError" class="hidden absolute inset-0 flex items-center justify-center bg-slate-900/90 z-20">
                         <div class="text-center p-6">
@@ -485,6 +493,24 @@
         const arHeartRateBar = document.getElementById('arHeartRateBar');
         const arPupil = document.getElementById('arPupil');
         const cameraError = document.getElementById('cameraError');
+        const qrcodeContainer = document.getElementById('qrcode');
+        
+        // Generate QR Code for AR Access
+        let qrCodeInstance = null;
+        const generateQRCode = () => {
+            if (qrCodeInstance) {
+                qrcodeContainer.innerHTML = ''; // Clear previous QR code
+            }
+            const currentURL = window.location.href.split('#')[0] + '#ar';
+            qrCodeInstance = new QRCode(qrcodeContainer, {
+                text: currentURL,
+                width: 100,
+                height: 100,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        };
         
         // LLM DOM Elements
         const generateThoughtButton = document.getElementById('generateThoughtButton');
@@ -1781,6 +1807,9 @@
                 viewC.classList.remove('hidden');
                 readingC.classList.remove('hidden');
                 
+                // Generate QR code for AR access
+                generateQRCode();
+                
                 startAR();
 
             } else {
@@ -1844,6 +1873,13 @@
         // Handle resizing
         window.addEventListener('resize', () => {
             if (!arModeActive) startCanvasAnimations();
+        });
+
+        // Check for #ar hash in URL and auto-activate AR mode
+        window.addEventListener('load', () => {
+            if (window.location.hash === '#ar') {
+                toggleARMode();
+            }
         });
 
         // Add a simulation button for a "Noise Spike"
