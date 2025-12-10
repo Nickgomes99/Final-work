@@ -1539,14 +1539,14 @@
             const panelWidth = 280;
             const panelHeight = 220; // Much larger text box
             
-            // Calculate position: target between the eyes (upper third of face)
+            // Calculate position: target the nose (center of face, vertically around 50-55%)
             // Use the actual center of the detected face rectangle
             const faceCenterX = x + (width / 2);
-            const eyeLineY = y + (height * 0.35); // Eyes are roughly at 35% from top of face
+            const noseY = y + (height * 0.55); // Nose is roughly at 55% from top of face
             
             // Center the panel perfectly by subtracting half its width/height
             let textX = Math.round(faceCenterX - (panelWidth / 2));
-            let textY = Math.round(eyeLineY - (panelHeight / 2));
+            let textY = Math.round(noseY - (panelHeight / 2));
 
             // Background for text
             ctx.fillStyle = 'rgba(0, 0, 0, 0.9)'; // Very dark bg for maximum readability
