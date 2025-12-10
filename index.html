@@ -451,7 +451,10 @@
         const modalType = document.getElementById('modalType');
         const modalDesc = document.getElementById('modalDesc');
         const modalImage = document.getElementById('modalImage');
+        const modalVideo = document.getElementById('modalVideo');
         const modalLoader = document.getElementById('modalLoader');
+        const generateVideoBtn = document.getElementById('generateVideoBtn');
+        const loaderText = document.getElementById('loaderText');
 
         // Buttons
         const tranquilityButtonA = document.getElementById('tranquilityButtonA'); 
@@ -526,7 +529,7 @@
         ];
         
         // Zone Definition for Relocation Map
-        // Added 'prompt' property for image generation
+        // Added 'prompt' property for image generation and 'videoPrompt' for video generation
         const ZONES = {
             z4: { 
                 x: 0.2, y: 0.2, 
@@ -536,7 +539,8 @@
                 title: 'Unit 49-Alpha', 
                 desc: 'Standard residential block. Adequate for basic survival. Features: Water Reclamation, Shared Data Port.',
                 prompt: 'A slightly worn, utilitarian futuristic residential apartment block, neutral lighting, cyberpunk aesthetic, realistic style.',
-                imageUrl: 'Nuetral area.png' 
+                imageUrl: 'Nuetral area.png',
+                videoPrompt: 'Cinematic slow pan across a utilitarian futuristic residential block, neutral gray concrete walls with digital displays, people walking in orderly fashion, cyberpunk aesthetic, realistic 4k footage, smooth camera movement'
             },
             z10: { 
                 x: 0.8, y: 0.8, 
@@ -546,7 +550,8 @@
                 title: 'Block 734-B', 
                 desc: 'A generic, grey concrete monolith. Windows are painted on. Features: Shared Bunks, Nutrient Dispensers, Mandatory Listening Posts.',
                 prompt: 'A terrifyingly boring grey concrete monolith building, brutalist architecture, no windows, gloomy dystopian atmosphere, dark lighting.',
-                imageUrl: 'Distopian area.avif'
+                imageUrl: 'Distopian area.avif',
+                videoPrompt: 'Dark cinematic footage of a massive grey brutalist concrete tower, ominous atmosphere, heavy fog, surveillance cameras visible, oppressive lighting, slow zoom out revealing the imposing structure, dystopian setting, 4k quality'
             },
             z6: { 
                 x: 0.7, y: 0.3, 
@@ -556,7 +561,8 @@
                 title: 'The Spire of Tomorrow', 
                 desc: 'A shimmering needle of glass and light, piercing the smog layer to reach the clear sky above. Features: Hydroponic Atriums, Anti-Gravity Lifts, Omni-Net Access.',
                 prompt: 'A futuristic shimmering glass tower, very tall and sleek, bright utopian lights, green hydroponic gardens visible inside, beautiful blue sky background.',
-                imageUrl: 'Utopian area.png'
+                imageUrl: 'Utopian area.png',
+                videoPrompt: 'Stunning aerial footage rising up a gleaming glass and steel futuristic tower, bright sunlight reflecting off surfaces, lush green hydroponic gardens visible through transparent walls, blue sky background, utopian atmosphere, smooth upward camera movement, 4k cinematic quality'
             }
         };
 
@@ -1238,13 +1244,12 @@
             
             // Reset visibility states first
             modalLoader.classList.add('hidden');
-            modalIcon.classList.add('hidden');
             modalImage.classList.add('hidden');
             
             if (zone.imageUrl) {
                 // Image already exists - show it directly
                 modalImage.src = zone.imageUrl;
-                modalImage.style.display = 'block';
+                modalImage.classList.remove('hidden');
                 modalLoader.classList.add('hidden');
                 
                 // Ensure image loads properly
@@ -1259,7 +1264,7 @@
                 };
             } else {
                 // Need to generate image
-                modalImage.style.display = 'none';
+                modalImage.classList.add('hidden');
                 modalLoader.classList.remove('hidden');
                 generateZoneImage(zone, zoneKey);
             }
