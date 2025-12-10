@@ -475,9 +475,9 @@
         const mandateText = document.getElementById('mandateText');
 
         // Canvas contexts
-        const ctxMap = mapCanvas.getContext('2d');
-        const ctxDirectional = directionalCanvas.getContext('2d');
-        const ctxAR = arCanvas.getContext('2d');
+        const ctxMap = mapCanvas ? mapCanvas.getContext('2d') : null;
+        const ctxDirectional = directionalCanvas ? directionalCanvas.getContext('2d') : null;
+        const ctxAR = arCanvas ? arCanvas.getContext('2d') : null;
         
         let animationFrameIdMap = null;
         let animationFrameIdDirectional = null;
@@ -1184,34 +1184,35 @@
         };
         
         // --- Click Interactions for Zones (Canvas) ---
-        directionalCanvas.addEventListener('click', (e) => {
-            const rect = directionalCanvas.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const clickY = e.clientY - rect.top;
-            
-            // Check distances to zones
-            const checkZoneClick = (zoneKey) => {
-                const zone = ZONES[zoneKey];
-                // Map normalized 0-1 to actual canvas pixels
-                const zx = zone.x * directionalCanvas.width;
-                const zy = zone.y * directionalCanvas.height;
+        if (directionalCanvas) {
+            directionalCanvas.addEventListener('click', (e) => {
+                const rect = directionalCanvas.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const clickY = e.clientY - rect.top;
                 
-                // Distance formula
-                const dist = Math.sqrt((clickX - zx) ** 2 + (clickY - zy) ** 2);
-                
-                // Radius of 15 for easier clicking
-                if (dist < 15) {
-                    showZoneModal(zone, zoneKey);
-                }
-            };
+                // Check distances to zones
+                const checkZoneClick = (zoneKey) => {
+                    const zone = ZONES[zoneKey];
+                    // Map normalized 0-1 to actual canvas pixels
+                    const zx = zone.x * directionalCanvas.width;
+                    const zy = zone.y * directionalCanvas.height;
+                    
+                    // Distance formula
+                    const dist = Math.sqrt((clickX - zx) ** 2 + (clickY - zy) ** 2);
+                    
+                    // Radius of 15 for easier clicking
+                    if (dist < 15) {
+                        showZoneModal(zone, zoneKey);
+                    }
+                };
 
-            checkZoneClick('z4');
-            checkZoneClick('z6');
-            checkZoneClick('z10');
-        });
+                checkZoneClick('z4');
+                checkZoneClick('z6');
+                checkZoneClick('z10');
+            });
 
-        // Change cursor on hover
-        directionalCanvas.addEventListener('mousemove', (e) => {
+            // Change cursor on hover
+            directionalCanvas.addEventListener('mousemove', (e) => {
             const rect = directionalCanvas.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
@@ -1232,6 +1233,7 @@
             
             directionalCanvas.style.cursor = hovering ? 'pointer' : 'default';
         });
+        }
 
         const showZoneModal = (zone, zoneKey) => {
             modalTitle.textContent = zone.title;
