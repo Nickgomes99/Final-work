@@ -1030,27 +1030,28 @@
                 // NO JITTER - Positions are now completely static
 
                 // Color transition based on Serenity Score:
-                // 0-50%: Red to Yellow-Green transition
-                // 50-100%: Yellow-Green to Bright Green transition
+                // 0%: Red spots
+                // 50%: Yellow spots
+                // 100%: Bright Green spots
                 
                 if (serenityScore < 50) {
-                    // Low serenity (0-50%): Red transitioning to yellow
+                    // Low serenity (0-50%): Red transitioning to Yellow
                     const transitionProgress = serenityScore / 50; // 0 to 1
                     const red = 239;
-                    const green = Math.floor(68 + (185 - 68) * transitionProgress);
-                    const blue = Math.floor(68 + (100 - 68) * transitionProgress);
-                    const opacity = 0.6 + transitionProgress * 0.3; // Increased minimum opacity
+                    const green = Math.floor(68 + (183 * transitionProgress)); // 68 -> 251
+                    const blue = Math.floor(68 + (-32 * transitionProgress)); // 68 -> 36
+                    const opacity = 0.7 + transitionProgress * 0.2;
                     color = `rgba(${red}, ${green}, ${blue}, ${opacity})`;
-                    radius = 30 + transitionProgress * 15; // Increased base radius
+                    radius = 35 + transitionProgress * 20; // 35 -> 55
                 } else {
-                    // High serenity (50-100%): Yellow-green to bright green
+                    // High serenity (50-100%): Yellow transitioning to Bright Green
                     const transitionProgress = (serenityScore - 50) / 50; // 0 to 1
-                    const red = Math.floor(239 - 223 * transitionProgress); // 239 -> 16
-                    const green = 185; // Keep green at max
-                    const blue = Math.floor(100 + 29 * transitionProgress); // 100 -> 129
-                    const opacity = 0.85 + transitionProgress * 0.15; // 0.85 -> 1.0 for maximum brightness
+                    const red = Math.floor(251 - 235 * transitionProgress); // 251 -> 16
+                    const green = Math.floor(191 + (-6 * transitionProgress)); // 191 -> 185
+                    const blue = Math.floor(36 + 93 * transitionProgress); // 36 -> 129
+                    const opacity = 0.9 + transitionProgress * 0.1; // 0.9 -> 1.0 for maximum brightness
                     color = `rgba(${red}, ${green}, ${blue}, ${opacity})`;
-                    radius = 45 + transitionProgress * 20; // Grows larger as score increases
+                    radius = 55 + transitionProgress * 25; // 55 -> 80 (much bigger at 100%)
                 }
                 
                 const gradient = ctxMap.createRadialGradient(x, y, 0, x, y, radius);
