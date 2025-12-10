@@ -390,7 +390,7 @@
                         <div class="space-y-4">
                             <div class="border-l-2 border-emerald-500 pl-3">
                                 <p class="text-xs text-emerald-400 font-futuristic mb-1">TARGET LOCK</p>
-                                <p class="text-sm text-slate-300" id="arTargetStatus">Scanning environment...</p>
+                                <p class="text-sm text-slate-300">Citizen Detected: <span id="arTargetStatus" class="text-emerald-400 font-futuristic">COMPLIANT</span></p>
                             </div>
                             
                             <div class="bg-slate-900/50 p-3 rounded border border-slate-700">
@@ -1083,6 +1083,20 @@
             serenityPercent.style.color = ''; // Reset to default
 
             incidentCount.textContent = citizenData.incidents;
+            
+            // Update AR Target Status based on Serenity Score
+            if (arTargetStatus) {
+                if (score >= 60) {
+                    arTargetStatus.textContent = 'COMPLIANT';
+                    arTargetStatus.className = 'text-emerald-400 font-futuristic';
+                } else if (score >= 30) {
+                    arTargetStatus.textContent = 'DISRUPTIVE';
+                    arTargetStatus.className = 'text-yellow-400 font-futuristic';
+                } else {
+                    arTargetStatus.textContent = 'THREAT';
+                    arTargetStatus.className = 'text-red-500 font-futuristic animate-pulse';
+                }
+            }
             
             // Update AR Threat Level based on Serenity Score (inverse relationship)
             if (arThreatLevel) {
