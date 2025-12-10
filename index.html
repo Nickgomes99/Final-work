@@ -10,7 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/tracking-min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/data/face-min.js"></script>
     <!-- Load QRCode.js for QR Code Generation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     
     <style>
         /* Custom font for a futuristic look */
@@ -498,18 +498,30 @@
         // Generate QR Code for AR Access
         let qrCodeInstance = null;
         const generateQRCode = () => {
-            if (qrCodeInstance) {
-                qrcodeContainer.innerHTML = ''; // Clear previous QR code
+            try {
+                if (qrCodeInstance) {
+                    qrcodeContainer.innerHTML = ''; // Clear previous QR code
+                }
+                const currentURL = window.location.href.split('#')[0] + '#ar';
+                
+                // Check if QRCode library is loaded
+                if (typeof QRCode !== 'undefined') {
+                    qrCodeInstance = new QRCode(qrcodeContainer, {
+                        text: currentURL,
+                        width: 100,
+                        height: 100,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                } else {
+                    console.error('QRCode library not loaded');
+                    qrcodeContainer.innerHTML = '<p class="text-xs text-red-400">QR unavailable</p>';
+                }
+            } catch (error) {
+                console.error('QR Code generation error:', error);
+                qrcodeContainer.innerHTML = '<p class="text-xs text-red-400">QR error</p>';
             }
-            const currentURL = window.location.href.split('#')[0] + '#ar';
-            qrCodeInstance = new QRCode(qrcodeContainer, {
-                text: currentURL,
-                width: 100,
-                height: 100,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
         };
         
         // LLM DOM Elements
