@@ -1086,9 +1086,10 @@
             
             // Update AR Target Status based on Serenity Score
             if (arTargetStatus) {
-                // When serenity is high (close to 100%), status is COMPLIANT
-                // When serenity is low (close to 0%), status is RISK
-                // When serenity is around 40-60%, status is DISRUPTIVE
+                // Status based ONLY on serenity score
+                // Low serenity (0-39%) = RISK
+                // Mid serenity (40-59%) = DISRUPTIVE
+                // High serenity (60-100%) = COMPLIANT
                 
                 if (score >= 60) {
                     // High serenity = Compliant (green)
@@ -1103,7 +1104,6 @@
                     arTargetStatus.textContent = 'RISK';
                     arTargetStatus.className = 'text-red-500 font-futuristic animate-pulse';
                 }
-                console.log('Status updated:', arTargetStatus.textContent, 'Serenity:', score);
             }
             
             // Update AR Threat Level based on Serenity Score (inverse relationship)
