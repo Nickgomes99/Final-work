@@ -1535,13 +1535,15 @@
             // Bottom Left
             ctx.beginPath(); ctx.moveTo(x + len, y + height); ctx.lineTo(x, y + height); ctx.lineTo(x, y + height - len); ctx.stroke();
 
-            // Floating Text Panel (Centered IN FRONT of face)
+            // Floating Text Panel (Perfectly Centered IN FRONT of face)
             const panelWidth = 140;
             const panelHeight = 145; // Increased height for extra info
             
-            // Calculate center position
-            let textX = x + (width / 2) - (panelWidth / 2);
-            let textY = y + (height / 2) - (panelHeight / 2);
+            // Calculate perfect center position aligned with face center
+            const faceCenterX = x + (width / 2);
+            const faceCenterY = y + (height / 2);
+            let textX = faceCenterX - (panelWidth / 2);
+            let textY = faceCenterY - (panelHeight / 2);
 
             // Background for text
             ctx.fillStyle = 'rgba(0, 0, 0, 0.75)'; // Darker bg for readability
