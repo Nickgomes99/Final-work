@@ -161,7 +161,7 @@
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.007 12.007 0 002.944 12c0 2.899 1.127 5.568 3.04 7.618a12.007 12.007 0 0015.032-7.618 11.955 11.955 0 01-3.04-8.618z"></path></svg>
                                 <span>Re-Engage with Protocol</span>
                             </button>
-                            <p class="text-xs text-slate-400 mt-2">Boosts Serenity Score (+10) and lowers Debt (-5).</p>
+                            <p class="text-xs text-slate-400 mt-2">Boosts Serenity Score (+5) and lowers Debt (-5).</p>
                         </div>
 
                         <!-- Noise Simulation (Empathic Grid Version) -->
@@ -222,7 +222,7 @@
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.007 12.007 0 002.944 12c0 2.899 1.127 5.568 3.04 7.618a12.007 12.007 0 0015.032-7.618 11.955 11.955 0 01-3.04-8.618z"></path></svg>
                                 <span>Re-Engage with Protocol</span>
                             </button>
-                            <p class="text-xs text-red-300 mt-2">Boosts Serenity Score (+10) and lowers Debt (-5).</p>
+                            <p class="text-xs text-red-300 mt-2">Boosts Serenity Score (+5) and lowers Debt (-5).</p>
                         </div>
 
                         <!-- Simulate Noise Spike (Time Share Version) -->
@@ -728,7 +728,7 @@
         // Function to increase noise/decrease stability
         const simulateNoiseEvent = async () => {
             const newDebt = Math.min(100, citizenData.complianceDebt + 10);
-            const newScore = Math.max(0, citizenData.serenityScore - 15); // RESTORED: Independent calculation
+            const newScore = Math.max(0, citizenData.serenityScore - 10); // Matched to debt rate
             const newIncidents = citizenData.incidents + 1;
             const newCountdownSeconds = citizenData.countdownSeconds * 0.95; 
 
@@ -753,7 +753,7 @@
         
         // Function to raise serenity/decrease debt
         const reEngageSerenity = async () => {
-            const newScore = Math.min(100, citizenData.serenityScore + 10); // RESTORED: Independent calculation
+            const newScore = Math.min(100, citizenData.serenityScore + 5); // Matched to debt rate
             const newDebt = Math.max(0, citizenData.complianceDebt - 5);    
 
             if (db) {
