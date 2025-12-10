@@ -1540,13 +1540,13 @@
             const panelWidth = width * 1.2; // 120% of face width to ensure coverage
             const panelHeight = height * 1.1; // 110% of face height to ensure coverage
             
-            // Calculate position: center on the entire face area
+            // Calculate position: center on the nose (horizontal center, 60% down from top)
             const faceCenterX = x + (width / 2);
-            const faceCenterY = y + (height / 2);
+            const noseY = y + (height * 0.6); // Nose is typically 60% down from top of face detection
             
-            // Center the panel perfectly on the face center
+            // Center the panel perfectly on the nose position
             let textX = Math.round(faceCenterX - (panelWidth / 2));
-            let textY = Math.round(faceCenterY - (panelHeight / 2));
+            let textY = Math.round(noseY - (panelHeight / 2));
 
             // Background for text
             ctx.fillStyle = 'rgba(0, 0, 0, 0.9)'; // Very dark bg for maximum readability
