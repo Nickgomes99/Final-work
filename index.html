@@ -835,14 +835,18 @@
         
         // Feature 2: Isolation Mandate Generation (Dynamic based on Debt)
         const generateIsolationMandate = () => {
+            console.log('Draft Mandate button clicked!'); // Debug log
+            
+            // Show the output immediately
+            mandateOutput.classList.remove('hidden');
+            
             // Check if API key is configured
             if (!apiKey || apiKey.includes('[YOUR_FULL_KEY_HERE]')) {
-                mandateOutput.classList.remove('hidden');
                 mandateText.textContent = "⚠️ API Key Required: Please configure your Google Gemini API key to use this feature. Get one at https://makersuite.google.com/app/apikey";
                 return;
             }
             
-            const keywords = document.querySelector('#readingB p:nth-child(2)').textContent;
+            const keywords = document.querySelector('#readingB p:nth-child(2)')?.textContent || "Unknown";
             const currentDebt = citizenData.complianceDebt;
             const citizenID = document.getElementById('citizenId').textContent;
             
