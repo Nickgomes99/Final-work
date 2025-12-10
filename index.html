@@ -520,7 +520,7 @@
 
         // --- Simulated Dystopian Data ---
         let citizenData = {
-            serenityScore: 0, // TEMPORARY: Set to 0 to test red spots (was 92)
+            serenityScore: 25, // Inverse of debt: 100 - 75 = 25
             complianceDebt: 75, // 0-100. Higher is closer to relocation (Bad).
             incidents: 4,
             countdownSeconds: 24 * 3600 * 0.75, // Approx 18 hours
@@ -728,7 +728,7 @@
         // Function to increase noise/decrease stability
         const simulateNoiseEvent = async () => {
             const newDebt = Math.min(100, citizenData.complianceDebt + 10);
-            const newScore = Math.max(0, citizenData.serenityScore - 10); // Matched to debt rate
+            const newScore = 100 - newDebt; // Inverse relationship: serenity = 100 - debt
             const newIncidents = citizenData.incidents + 1;
             const newCountdownSeconds = citizenData.countdownSeconds * 0.95; 
 
@@ -753,8 +753,8 @@
         
         // Function to raise serenity/decrease debt
         const reEngageSerenity = async () => {
-            const newScore = Math.min(100, citizenData.serenityScore + 5); // Matched to debt rate
-            const newDebt = Math.max(0, citizenData.complianceDebt - 5);    
+            const newDebt = Math.max(0, citizenData.complianceDebt - 5);
+            const newScore = 100 - newDebt; // Inverse relationship: serenity = 100 - debt    
 
             if (db) {
                 const docRef = getUserDocRef();
