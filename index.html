@@ -1536,8 +1536,8 @@
             ctx.beginPath(); ctx.moveTo(x + len, y + height); ctx.lineTo(x, y + height); ctx.lineTo(x, y + height - len); ctx.stroke();
 
             // Floating Text Panel (Perfectly Centered IN FRONT of face)
-            const panelWidth = 140;
-            const panelHeight = 145; // Increased height for extra info
+            const panelWidth = 200;
+            const panelHeight = 180; // Increased height for extra info
             
             // Calculate perfect center position aligned with face center
             const faceCenterX = x + (width / 2);
@@ -1546,38 +1546,38 @@
             let textY = faceCenterY - (panelHeight / 2);
 
             // Background for text
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.75)'; // Darker bg for readability
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)'; // Darker bg for readability
             ctx.fillRect(textX, textY, panelWidth, panelHeight);
             ctx.strokeStyle = '#10b981';
-            ctx.lineWidth = 1;
+            ctx.lineWidth = 2;
             ctx.strokeRect(textX, textY, panelWidth, panelHeight);
 
             // Text info
-            ctx.font = "bold 12px Orbitron";
+            ctx.font = "bold 14px Orbitron";
             ctx.fillStyle = "#10b981";
-            ctx.fillText("CITIZEN: DETECTED", textX + 10, textY + 20);
+            ctx.fillText("CITIZEN: DETECTED", textX + 15, textY + 25);
             
             // Get ID from DOM
             const currentID = document.getElementById('citizenId').textContent || "UNKNOWN";
 
             ctx.fillStyle = "#e2e8f0";
-            ctx.font = "10px Inter"; 
+            ctx.font = "12px Inter"; 
             
             // New Lines
-            ctx.fillText("ID: " + currentID, textX + 10, textY + 35);
-            ctx.fillText("Zone: 4 (Resident)", textX + 10, textY + 50);
+            ctx.fillText("ID: " + currentID, textX + 15, textY + 50);
+            ctx.fillText("Zone: 4 (Resident)", textX + 15, textY + 70);
 
             // Existing Lines shifted down
-            ctx.fillText("Serenity: " + citizenData.serenityScore + "%", textX + 10, textY + 65);
-            ctx.fillText("Debt: " + citizenData.complianceDebt + "%", textX + 10, textY + 80);
+            ctx.fillText("Serenity: " + citizenData.serenityScore + "%", textX + 15, textY + 90);
+            ctx.fillText("Debt: " + citizenData.complianceDebt + "%", textX + 15, textY + 110);
             
             ctx.fillStyle = citizenData.complianceDebt > 80 ? "#ef4444" : "#10b981";
-            ctx.fillText("STATUS: " + (citizenData.complianceDebt > 80 ? "RISK" : "COMPLIANT"), textX + 10, textY + 95);
+            ctx.fillText("STATUS: " + (citizenData.complianceDebt > 80 ? "RISK" : "COMPLIANT"), textX + 15, textY + 130);
 
             // New Mandate/Enforcement Lines
             ctx.fillStyle = "#fca5a5"; // Light red/pink for alert info
-            ctx.fillText("Flagged: 'Freedom'", textX + 10, textY + 115);
-            ctx.fillText("Reassignment: PENDING", textX + 10, textY + 130);
+            ctx.fillText("Flagged: 'Freedom'", textX + 15, textY + 155);
+            ctx.fillText("Reassignment: PENDING", textX + 15, textY + 175);
         };
 
         const updateARSimData = () => {
