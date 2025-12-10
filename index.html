@@ -1290,8 +1290,11 @@
             const maxJitter = 10; 
             const noiseInfluence = debt / 100; // 0 (calm) to 1 (max noise)
 
-            // Dynamic Position (Jitter influenced by Noise) - YOU marker still moves slightly to show "life"
-            const markerX = width * 0.2 + Math.sin(Date.now() / 500) * maxJitter * noiseInfluence;
+            // Dynamic Position based on Serenity Score
+            // Low serenity (0%) = left side (red spots at 20%)
+            // High serenity (100%) = right side (green spots at 80%)
+            const baseX = 0.2 + (serenityScore / 100) * 0.6; // Moves from 20% to 80% across map
+            const markerX = width * baseX + Math.sin(Date.now() / 500) * maxJitter * noiseInfluence;
             const markerY = height * 0.8 + Math.cos(Date.now() / 700) * maxJitter * noiseInfluence;
 
             // Dynamic Radius (Grows as score drops)
