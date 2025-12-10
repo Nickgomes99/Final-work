@@ -194,6 +194,16 @@
                             <span class="text-red-300">Current: Zone 4</span>
                             <span class="text-red-300">Exile: Zone 10</span>
                         </div>
+                        
+                        <!-- Current Serenity Score Display -->
+                        <div class="mt-3">
+                            <p class="text-xs text-emerald-400 mb-1">CURRENT SERENITY SCORE (A-View)</p>
+                            <div class="w-full bg-slate-700 rounded-full h-3 relative overflow-hidden">
+                                <div id="serenityBarB" class="bg-emerald-500 h-3 rounded-full transition-all duration-1000 relative" style="width: 92%"></div>
+                            </div>
+                            <p id="serenityPercentB" class="text-xs text-emerald-400 mt-1 font-futuristic text-right">92% (Optimal)</p>
+                        </div>
+                        
                         <div class="mt-3">
                             <p class="text-xs text-red-400 mb-1">COMPLIANCE DEBT LEVEL (Trigger)</p>
                             <div class="w-full bg-slate-700 rounded-full h-3 relative overflow-hidden">
@@ -450,6 +460,8 @@
         const debtPercent = document.getElementById('debtPercent');
         const serenityBar = document.getElementById('serenityBar');
         const serenityPercent = document.getElementById('serenityPercent');
+        const serenityBarB = document.getElementById('serenityBarB');
+        const serenityPercentB = document.getElementById('serenityPercentB');
         const incidentCount = document.getElementById('incidentCount');
         const mediaList = document.getElementById('mediaList');
         
@@ -1009,6 +1021,14 @@
             debtBar.style.width = `${debt}%`;
             debtBar.style.backgroundColor = colorStyle;
             debtPercent.textContent = `${debt}%`;
+            
+            // Update Time Share Serenity Display
+            serenityBarB.style.width = `${score}%`;
+            serenityBarB.classList.remove('bg-red-500', 'bg-emerald-500');
+            serenityBarB.classList.toggle('bg-red-500', score < 50);
+            serenityBarB.classList.toggle('bg-emerald-500', score >= 50);
+            serenityPercentB.textContent = `${score}% (${score > 80 ? 'Optimal' : score > 50 ? 'Stable' : 'Unstable'})`;
+            serenityPercentB.style.color = score < 50 ? 'rgb(252, 165, 165)' : 'rgb(52, 211, 153)';
             
             // Countdown Timer
             let totalSeconds = Math.max(0, Math.floor(citizenData.countdownSeconds));
