@@ -999,6 +999,7 @@
 
             // Variables calculated once per frame
             const debt = citizenData.complianceDebt;
+            const serenityScore = citizenData.serenityScore;
             const isStable = debt < 30; // Use debt as primary metric now (Low debt = stable)
             
             // Determine which set of spots to use based on state
@@ -1030,8 +1031,10 @@
 
                 if (isStable) {
                     // Scenario: Stable/Optimal (Draw Green Spots)
-                    color = `rgba(16, 185, 129, 0.7)`; // Green for Tranquility
-                    radius = 30; 
+                    // Brightness increases with serenity score (50-100 range mapped to 0.4-1.0 opacity)
+                    const brightnessMultiplier = 0.4 + (serenityScore / 100) * 0.6;
+                    color = `rgba(16, 185, 129, ${brightnessMultiplier})`; // Green for Tranquility
+                    radius = 30 + (serenityScore / 100) * 20; // Also increase size slightly with higher score
                 } else {
                     // Scenario: Unstable (Draw Red/Yellow Spots)
                     color = `rgba(239, 68, 68, ${debt / 100})`; // Red for Noise
