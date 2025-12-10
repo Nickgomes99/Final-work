@@ -1002,8 +1002,8 @@
             const serenityScore = citizenData.serenityScore;
             const isStable = debt < 30; // Use debt as primary metric now (Low debt = stable)
             
-            // Determine which set of spots to use based on state
-            const activePositions = isStable ? STATIC_GREEN_POSITIONS : STATIC_RED_POSITIONS;
+            // Determine which set of spots to use - ALWAYS show green positions, but color changes
+            const activePositions = STATIC_GREEN_POSITIONS;
 
             // --- 1. Draw City Background (Image or Fallback) ---
             // Background removed - canvas is now transparent
@@ -1029,20 +1029,28 @@
                 
                 // NO JITTER - Positions are now completely static
 
-                if (isStable) {
-                    // Scenario: Stable/Optimal (Draw Green Spots)
-                    // Brightness increases with serenity score (50-100 range mapped to 0.4-1.0 opacity)
-                    const brightnessMultiplier = 0.4 + (serenityScore / 100) * 0.6;
-                    color = `rgba(16, 185, 129, ${brightnessMultiplier})`; // Green for Tranquility
-                    radius = 30 + (serenityScore / 100) * 20; // Also increase size slightly with higher score
+                // Color transition based on Serenity Score:
+                // 0-50%: Red to Yellow-Green transition
+                // 50-100%: Yellow-Green to Bright Green transition
+                
+                if (serenityScore < 50) {
+                    // Low serenity (0-50%): Red transitioning to yellow
+                    const transitionProgress = serenityScore / 50; // 0 to 1
+                    const red = 239;
+                    const green = Math.floor(68 + (185 - 68) * transitionProgress);
+                    const blue = Math.floor(68 + (100 - 68) * transitionProgress);
+                    const opacity = 0.5 + transitionProgress * 0.3;
+                    color = `rgba(${red}, ${green}, ${blue}, ${opacity})`;
+                    radius = 25 + transitionProgress * 15;
                 } else {
-                    // Scenario: Unstable (Draw Red/Yellow Spots)
-                    color = `rgba(239, 68, 68, ${debt / 100})`; // Red for Noise
-                    radius = debt * 0.5 + 20;
-                    
-                    if (i % 3 === 0) { 
-                        color = `rgba(251, 191, 36, ${debt / 150})`; // Yellow for minor stress
-                    }
+                    // High serenity (50-100%): Yellow-green to bright green
+                    const transitionProgress = (serenityScore - 50) / 50; // 0 to 1
+                    const red = Math.floor(239 - 223 * transitionProgress); // 239 -> 16
+                    const green = 185; // Keep green at max
+                    const blue = Math.floor(100 + 29 * transitionProgress); // 100 -> 129
+                    const opacity = 0.8 + transitionProgress * 0.2; // 0.8 -> 1.0 for maximum brightness
+                    color = `rgba(${red}, ${green}, ${blue}, ${opacity})`;
+                    radius = 40 + transitionProgress * 20; // Grows larger as score increases
                 }
                 
                 const gradient = ctxMap.createRadialGradient(x, y, 0, x, y, radius);
