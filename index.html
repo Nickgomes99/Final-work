@@ -1296,6 +1296,11 @@
             const baseX = 0.2 + (serenityScore / 100) * 0.6; // Moves from 20% to 80% across map
             const markerX = width * baseX + Math.sin(Date.now() / 500) * maxJitter * noiseInfluence;
             const markerY = height * 0.8 + Math.cos(Date.now() / 700) * maxJitter * noiseInfluence;
+            
+            // Debug logging (remove after testing)
+            if (Math.random() < 0.01) { // Log occasionally to avoid spam
+                console.log('YOU marker - Serenity:', serenityScore, 'Position X:', Math.round(baseX * 100) + '%');
+            }
 
             // Dynamic Radius (Grows as score drops)
             const markerRadius = baseRadius + (debt / 5); // Base 5, Max 25 (when score is 0)
