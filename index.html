@@ -1627,9 +1627,7 @@
                 // Visual indication of signal status
                 if (timeSinceDetection > 500) {
                      // Lost signal but holding position (Ghosting)
-                     arTargetStatus.textContent = "SIGNAL UNSTABLE // EXTRAPOLATING";
-                     arTargetStatus.classList.remove("text-red-400");
-                     arTargetStatus.classList.add("text-yellow-400");
+                     // Status is managed by updateDystopianUI()
                      
                      // Draw warning indicator on canvas
                      ctx.save();
@@ -1638,10 +1636,7 @@
                      ctx.fillText("⚠ SIGNAL INTERRUPTED", arCurrentRect.x, arCurrentRect.y - 10);
                      ctx.restore();
                 } else {
-                     // Strong signal
-                     arTargetStatus.textContent = "SUBJECT IDENTIFIED";
-                     arTargetStatus.classList.remove("text-yellow-400", "text-slate-300");
-                     arTargetStatus.classList.add("text-red-400");
+                     // Strong signal - Status is managed by updateDystopianUI()
                 }
                 
                 updateARSimData();
@@ -1649,9 +1644,7 @@
             } else {
                 // Scanning Mode (No face or timeout exceeded)
                 drawARScanning(ctx, w, h);
-                arTargetStatus.textContent = "Scanning sector...";
-                arTargetStatus.classList.remove("text-red-400", "text-yellow-400");
-                arTargetStatus.classList.add("text-slate-300");
+                // Status is managed by updateDystopianUI()
                 
                 // Reset targets
                 arTargetRect = null;
@@ -1856,7 +1849,7 @@
                 drawARScanning(ctxAR, w, h);
                 
                 updateARSimData();
-                arTargetStatus.textContent = "SIMULATION MODE ACTIVE";
+                // Status is managed by updateDystopianUI()
 
                 animationFrameIdAR = requestAnimationFrame(loop);
              };
