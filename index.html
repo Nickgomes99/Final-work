@@ -1535,18 +1535,18 @@
             // Bottom Left
             ctx.beginPath(); ctx.moveTo(x + len, y + height); ctx.lineTo(x, y + height); ctx.lineTo(x, y + height - len); ctx.stroke();
 
-            // Floating Text Panel (Centered between the eyes)
-            const panelWidth = 280;
-            const panelHeight = 220; // Much larger text box
+            // Floating Text Panel (Scaled to face size and perfectly centered)
+            // Make the panel size proportional to the detected face
+            const panelWidth = width * 1.2; // 120% of face width to ensure coverage
+            const panelHeight = height * 1.1; // 110% of face height to ensure coverage
             
-            // Calculate position: target the nose (center of face, vertically around 50-55%)
-            // Use the actual center of the detected face rectangle
+            // Calculate position: center on the entire face area
             const faceCenterX = x + (width / 2);
-            const noseY = y + (height * 0.55); // Nose is roughly at 55% from top of face
+            const faceCenterY = y + (height / 2);
             
-            // Center the panel perfectly by subtracting half its width/height
+            // Center the panel perfectly on the face center
             let textX = Math.round(faceCenterX - (panelWidth / 2));
-            let textY = Math.round(noseY - (panelHeight / 2));
+            let textY = Math.round(faceCenterY - (panelHeight / 2));
 
             // Background for text
             ctx.fillStyle = 'rgba(0, 0, 0, 0.9)'; // Very dark bg for maximum readability
@@ -1555,32 +1555,38 @@
             ctx.lineWidth = 3;
             ctx.strokeRect(textX, textY, panelWidth, panelHeight);
 
-            // Text info with larger fonts
-            ctx.font = "bold 16px Orbitron";
+            // Calculate dynamic font sizes based on panel size
+            const baseFontSize = Math.max(12, panelWidth / 20);
+            const headerFontSize = Math.max(14, panelWidth / 17);
+            const padding = panelWidth * 0.07;
+            const lineSpacing = panelHeight / 9;
+
+            // Text info with dynamic fonts
+            ctx.font = `bold ${headerFontSize}px Orbitron`;
             ctx.fillStyle = "#10b981";
-            ctx.fillText("CITIZEN: DETECTED", textX + 20, textY + 30);
+            ctx.fillText("CITIZEN: DETECTED", textX + padding, textY + lineSpacing * 1);
             
             // Get ID from DOM
             const currentID = document.getElementById('citizenId').textContent || "UNKNOWN";
 
             ctx.fillStyle = "#e2e8f0";
-            ctx.font = "14px Inter"; 
+            ctx.font = `${baseFontSize}px Inter`; 
             
-            // New Lines with more spacing
-            ctx.fillText("ID: " + currentID, textX + 20, textY + 60);
-            ctx.fillText("Zone: 4 (Resident)", textX + 20, textY + 85);
+            // New Lines with dynamic spacing
+            ctx.fillText("ID: " + currentID, textX + padding, textY + lineSpacing * 2.5);
+            ctx.fillText("Zone: 4 (Resident)", textX + padding, textY + lineSpacing * 3.5);
 
             // Existing Lines shifted down
-            ctx.fillText("Serenity: " + citizenData.serenityScore + "%", textX + 20, textY + 110);
-            ctx.fillText("Debt: " + citizenData.complianceDebt + "%", textX + 20, textY + 135);
+            ctx.fillText("Serenity: " + citizenData.serenityScore + "%", textX + padding, textY + lineSpacing * 4.5);
+            ctx.fillText("Debt: " + citizenData.complianceDebt + "%", textX + padding, textY + lineSpacing * 5.5);
             
             ctx.fillStyle = citizenData.complianceDebt > 80 ? "#ef4444" : "#10b981";
-            ctx.fillText("STATUS: " + (citizenData.complianceDebt > 80 ? "RISK" : "COMPLIANT"), textX + 20, textY + 160);
+            ctx.fillText("STATUS: " + (citizenData.complianceDebt > 80 ? "RISK" : "COMPLIANT"), textX + padding, textY + lineSpacing * 6.5);
 
             // New Mandate/Enforcement Lines
             ctx.fillStyle = "#fca5a5"; // Light red/pink for alert info
-            ctx.fillText("Flagged: 'Freedom'", textX + 20, textY + 190);
-            ctx.fillText("Reassignment: PENDING", textX + 20, textY + 215);
+            ctx.fillText("Flagged: 'Freedom'", textX + padding, textY + lineSpacing * 7.8);
+            ctx.fillText("Reassignment: PENDING", textX + padding, textY + lineSpacing * 8.7);
         };
 
         const updateARSimData = () => {
