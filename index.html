@@ -926,18 +926,20 @@
         };
 
         // Feature 1: Optimal Thought Generation
-        const generateOptimalThought = () => {
+        const generateOptimalThought = async () => {
             console.log('Generate Optimal Thought button clicked!'); // Debug log
             
             // Show the output immediately
             thoughtOutput.classList.remove('hidden');
+            generateThoughtButton.disabled = true;
+            const originalButtonText = generateThoughtButton.innerHTML;
+            generateThoughtButton.innerHTML = 'Processing...';
             
             const serenityScore = citizenData.serenityScore;
             const status = serenityScore < 80 ? 'unstable' : 'stable';
             
-            // Check if API key is configured properly
-            if (!apiKey || apiKey.includes('[YOUR_FULL_KEY_HERE]')) {
-                // Fallback: Generate thought without API based on serenity score
+            // Function to generate local fallback thought
+            const generateLocalThought = () => {
                 let thoughtMessage = "";
                 
                 if (serenityScore >= 90) {
@@ -979,14 +981,51 @@
                 }
                 
                 thoughtText.textContent = thoughtMessage;
+                generateThoughtButton.innerHTML = originalButtonText;
+                generateThoughtButton.disabled = false;
+            };
+            
+            // Check if API key is configured properly or if we should skip API
+            if (!apiKey || apiKey.includes('[YOUR_FULL_KEY_HERE]')) {
+                generateLocalThought();
                 return;
             }
             
-            // If API key exists, use AI generation
-            const userQuery = `Citizen Status: ${status}. Current Serenity Score: ${serenityScore}. Generate a single, concise, politically compliant mantra or thought designed to promote emotional stability and collective unity. It must be sterile and impersonal.`;
-            const systemPrompt = "You are the Grid-Mind's thought regulator. Generate a positive, non-emotional, single-sentence affirmation that prioritizes the collective good over individual feeling.";
+            // Try API generation with fallback to local on error
+            try {
+                thoughtText.textContent = 'Accessing Grid-Mind thought database...';
+                
+                const userQuery = `Citizen Status: ${status}. Current Serenity Score: ${serenityScore}. Generate a single, concise, politically compliant mantra or thought designed to promote emotional stability and collective unity. It must be sterile and impersonal.`;
+                const systemPrompt = "You are the Grid-Mind's thought regulator. Generate a positive, non-emotional, single-sentence affirmation that prioritizes the collective good over individual feeling.";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                };
 
-            geminiApiCall(systemPrompt, userQuery, generateThoughtButton, thoughtOutput, thoughtText);
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const resultText = result.candidates?.[0]?.content?.parts?.[0]?.text || "Error: Could not retrieve generated text.";
+                
+                thoughtText.textContent = resultText;
+                generateThoughtButton.innerHTML = originalButtonText;
+                generateThoughtButton.disabled = false;
+                
+            } catch (error) {
+                console.warn("API call failed, using local generation:", error);
+                // Fall back to local generation on any error
+                generateLocalThought();
+            }
         };
         
         // Feature 2: Isolation Mandate Generation (Dynamic based on Debt)
