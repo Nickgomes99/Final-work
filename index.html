@@ -589,6 +589,9 @@
         let lastFaceDetectTime = 0;
         const AR_PERSISTENCE_MS = 2000; // 2 seconds persistence
 
+        // Track last generated messages to avoid repeats
+        let lastThoughtMessage = "";
+
         // --- Simulated Dystopian Data ---
         let citizenData = {
             serenityScore: 0, // Inverse of debt: 100 - 100 = 0
