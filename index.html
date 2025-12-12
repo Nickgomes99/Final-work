@@ -990,19 +990,21 @@
         };
         
         // Feature 2: Isolation Mandate Generation (Dynamic based on Debt)
-        const generateIsolationMandate = () => {
+        const generateIsolationMandate = async () => {
             console.log('Draft Mandate button clicked!'); // Debug log
             
             // Show the output immediately
             mandateOutput.classList.remove('hidden');
+            draftMandateButton.disabled = true;
+            const originalButtonText = draftMandateButton.innerHTML;
+            draftMandateButton.innerHTML = 'Analyzing...';
             
             const keywords = document.querySelector('#readingB p:nth-child(2)')?.textContent || "Unknown";
             const currentDebt = citizenData.complianceDebt;
             const citizenID = document.getElementById('citizenId').textContent;
             
-            // Check if API key is configured properly
-            if (!apiKey || apiKey.includes('[YOUR_FULL_KEY_HERE]')) {
-                // Fallback: Generate mandate without API
+            // Function to generate local fallback mandate
+            const generateLocalMandate = () => {
                 let mandateMessage = "";
                 
                 if (currentDebt >= 80) {
@@ -1017,34 +1019,67 @@
                 
                 mandateText.textContent = mandateMessage;
                 mandateText.style.whiteSpace = 'pre-line';
+                draftMandateButton.innerHTML = originalButtonText;
+                draftMandateButton.disabled = false;
+            };
+            
+            // Check if API key is configured properly or if we should skip API
+            if (!apiKey || apiKey.includes('[YOUR_FULL_KEY_HERE]')) {
+                generateLocalMandate();
                 return;
             }
             
-            // If API key exists, use AI generation
-            let systemPrompt = "";
-            let contextInstruction = "";
+            // Try API generation with fallback to local on error
+            try {
+                mandateText.textContent = 'Processing request through Grid-Mind servers...';
+                
+                let systemPrompt = "";
+                let contextInstruction = "";
 
-            if (currentDebt >= 80) {
-                // Scenario: CRITICAL NON-COMPLIANCE (Exile)
-                systemPrompt = "You are the Chief Enforcer of the Grid. You are angry, final, and terrifying. Do not be polite.";
-                contextInstruction = `The citizen is at CRITICAL DEBT LEVELS (${currentDebt}%). Draft an 'IMMEDIATE EXTRACTION ORDER'. State that Zone 10 exile is now mandatory and immediate. Use harsh, absolute language. Cite the flagged keywords: ${keywords}.`;
-            } else if (currentDebt >= 50) {
-                // Scenario: STANDARD VIOLATION (Re-calibration)
-                systemPrompt = "You are the Director of Compliance. You are cold, bureaucratic, and unfeeling.";
-                contextInstruction = `The citizen has high debt (${currentDebt}%). Draft a formal 'Isolation Mandate' for temporary transfer to Zone 10 for re-calibration. Use standard bureaucratic terms like 'non-compliant emotional amplitude' and 'collective stability protocols'.`;
-            } else if (currentDebt >= 20) {
-                // Scenario: MINOR INFRACTION (Warning)
-                systemPrompt = "You are a Grid Counselor. You are passive-aggressive and condescendingly helpful.";
-                contextInstruction = `The citizen has minor debt (${currentDebt}%). Draft a 'Notice of Harmony Correction'. Do not mandate exile yet, but strongly suggest they self-report to Zone 6 for voluntary adjustment to avoid future penalties. Frame it as "for their own good".`;
-            } else {
-                // Scenario: MODEL CITIZEN (Commendation)
-                systemPrompt = "You are the Voice of the Empathic Grid. You are proud, nurturing, and overly positive.";
-                contextInstruction = `The citizen has excellent compliance (Debt: ${currentDebt}%). Draft a 'Commendation of Unity'. Praise their emotional flatness and stability. Tell them they are a model for the collective. Grant them a small, token reward (like 'extra nutrient paste' or '10 minutes of sky-viewing').`;
+                if (currentDebt >= 80) {
+                    systemPrompt = "You are the Chief Enforcer of the Grid. You are angry, final, and terrifying. Do not be polite.";
+                    contextInstruction = `The citizen is at CRITICAL DEBT LEVELS (${currentDebt}%). Draft an 'IMMEDIATE EXTRACTION ORDER'. State that Zone 10 exile is now mandatory and immediate. Use harsh, absolute language. Cite the flagged keywords: ${keywords}.`;
+                } else if (currentDebt >= 50) {
+                    systemPrompt = "You are the Director of Compliance. You are cold, bureaucratic, and unfeeling.";
+                    contextInstruction = `The citizen has high debt (${currentDebt}%). Draft a formal 'Isolation Mandate' for temporary transfer to Zone 10 for re-calibration. Use standard bureaucratic terms like 'non-compliant emotional amplitude' and 'collective stability protocols'.`;
+                } else if (currentDebt >= 20) {
+                    systemPrompt = "You are a Grid Counselor. You are passive-aggressive and condescendingly helpful.";
+                    contextInstruction = `The citizen has minor debt (${currentDebt}%). Draft a 'Notice of Harmony Correction'. Do not mandate exile yet, but strongly suggest they self-report to Zone 6 for voluntary adjustment to avoid future penalties. Frame it as "for their own good".`;
+                } else {
+                    systemPrompt = "You are the Voice of the Empathic Grid. You are proud, nurturing, and overly positive.";
+                    contextInstruction = `The citizen has excellent compliance (Debt: ${currentDebt}%). Draft a 'Commendation of Unity'. Praise their emotional flatness and stability. Tell them they are a model for the collective. Grant them a small, token reward (like 'extra nutrient paste' or '10 minutes of sky-viewing').`;
+                }
+
+                const userQuery = `Citizen ID: ${citizenID}. ${contextInstruction}`;
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const resultText = result.candidates?.[0]?.content?.parts?.[0]?.text || "Error: Could not retrieve generated text.";
+                
+                mandateText.textContent = resultText;
+                draftMandateButton.innerHTML = originalButtonText;
+                draftMandateButton.disabled = false;
+                
+            } catch (error) {
+                console.warn("API call failed, using local generation:", error);
+                // Fall back to local generation on any error
+                generateLocalMandate();
             }
-
-            const userQuery = `Citizen ID: ${citizenID}. ${contextInstruction}`;
-
-            geminiApiCall(systemPrompt, userQuery, draftMandateButton, mandateOutput, mandateText);
         };
 
         // Bind LLM buttons
